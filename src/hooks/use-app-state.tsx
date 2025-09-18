@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useReducer, useContext, useEffect } from 'react';
+import React, { createContext, useReducer, useContext, useEffect, useCallback } from 'react';
 import { useLocalStorage } from './use-local-storage';
 import debounce from 'lodash.debounce';
 
@@ -24,9 +24,9 @@ const initialState: AppState = {
 function appStateReducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case 'SET_FUNCTION':
-      return { ...state, func: action.payload };
+      return { ...state, func: action.payload, lastSaved: Date.now() };
     case 'SET_GUIDED_MODE':
-      return { ...state, guidedMode: action.payload };
+      return { ...state, guidedMode: action.payload, lastSaved: Date.now() };
     case 'LOAD_STATE':
       return { ...action.payload };
     default:
@@ -43,27 +43,27 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(appStateReducer, initialState);
   const [history, setHistory] = useLocalStorage<AppState[]>('multicalc-history', []);
 
-  // Effect to auto-save to history on change
-  useEffect(() => {
-    const saveToHistory = debounce(() => {
-      if (state.func) {
-        const currentState = { ...state, lastSaved: Date.now() };
+  const debouncedSave = useCallback(
+    debounce((appState: AppState) => {
+      if (appState.func) {
         setHistory(prevHistory => {
           const newHistory = [
-            currentState,
-            ...prevHistory.filter(h => h.func !== currentState.func),
+            appState,
+            ...prevHistory.filter(h => h.func !== appState.func),
           ];
-          return newHistory.slice(0, 10); // Keep only the last 10 entries
+          return newHistory.slice(0, 10);
         });
       }
-    }, 1000);
+    }, 1000),
+    [setHistory] 
+  );
 
-    saveToHistory();
-
+  useEffect(() => {
+    debouncedSave(state);
     return () => {
-      saveToHistory.cancel();
+      debouncedSave.cancel();
     };
-  }, [state.func, state.guidedMode, state, setHistory]);
+  }, [state.func, state.guidedMode, debouncedSave, state]);
 
   return (
     <AppStateContext.Provider value={{ state, dispatch }}>
