@@ -12,8 +12,10 @@ const VisualizationPanel = dynamic(
     ssr: false,
     loading: () => (
       <div className="flex-1 flex flex-col p-4 bg-muted/30 items-center justify-center">
-        <p>Cargando visualización 3D...</p>
-        <Skeleton className="h-full w-full mt-4" />
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Cargando visualización 3D...</p>
+        </div>
       </div>
     ),
   }
