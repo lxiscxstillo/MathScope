@@ -9,7 +9,7 @@ export default function Home() {
     <AppStateProvider>
       <div className="flex flex-col min-h-screen bg-background font-body">
         <Header />
-        <main className="flex flex-1">
+        <main className="flex flex-1 overflow-hidden">
           <ControlPanel />
           <VisualizationPanel />
         </main>

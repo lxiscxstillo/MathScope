@@ -21,23 +21,23 @@ export function ControlPanel() {
         <TabsList className="m-2 grid w-auto grid-cols-5">
           <TabsTrigger value="function" className="h-auto py-2">
             <FunctionSquare className="w-5 h-5 mb-1" />
-            <span className="text-xs">Function</span>
+            <span className="text-xs">Función</span>
           </TabsTrigger>
           <TabsTrigger value="integration" className="h-auto py-2">
             <SlidersHorizontal className="w-5 h-5 mb-1" />
-            <span className="text-xs">Integrals</span>
+            <span className="text-xs">Integrales</span>
           </TabsTrigger>
           <TabsTrigger value="optimization" className="h-auto py-2">
             <Waypoints className="w-5 h-5 mb-1" />
-            <span className="text-xs">Optimize</span>
+            <span className="text-xs">Optimizar</span>
           </TabsTrigger>
           <TabsTrigger value="history" className="h-auto py-2">
             <History className="w-5 h-5 mb-1" />
-            <span className="text-xs">History</span>
+            <span className="text-xs">Historial</span>
           </TabsTrigger>
           <TabsTrigger value="explain" className="h-auto py-2">
             <HelpCircle className="w-5 h-5 mb-1" />
-            <span className="text-xs">Explain</span>
+            <span className="text-xs">Explicar</span>
           </TabsTrigger>
         </TabsList>
         <ScrollArea className="flex-1">

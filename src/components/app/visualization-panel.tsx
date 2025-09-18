@@ -22,11 +22,11 @@ export function VisualizationPanel() {
           }}
         />
         <div className="z-10 text-center text-muted-foreground p-4">
-            <p className="text-lg font-medium">3D Visualization</p>
+            <p className="text-lg font-medium">Visualización 3D</p>
             <p className="font-code text-primary bg-primary/10 px-2 py-1 rounded-md mt-2 inline-block">
-            {state.func || "No function provided"}
+            {state.func || "Ninguna función definida"}
             </p>
-            <p className="text-sm mt-2">Graph will appear here</p>
+            <p className="text-sm mt-2">El gráfico aparecerá aquí</p>
         </div>
       </div>
       <div className="flex items-center justify-center gap-2 mt-4">
@@ -38,7 +38,7 @@ export function VisualizationPanel() {
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Zoom In</p>
+              <p>Acercar</p>
             </TooltipContent>
           </Tooltip>
           <Tooltip>
@@ -48,7 +48,7 @@ export function VisualizationPanel() {
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Zoom Out</p>
+              <p>Alejar</p>
             </TooltipContent>
           </Tooltip>
           <Tooltip>
@@ -58,7 +58,7 @@ export function VisualizationPanel() {
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Rotate</p>
+              <p>Rotar</p>
             </TooltipContent>
           </Tooltip>
           <Tooltip>
@@ -68,7 +68,7 @@ export function VisualizationPanel() {
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Slice</p>
+              <p>Cortar</p>
             </TooltipContent>
           </Tooltip>
            <Tooltip>
@@ -78,7 +78,7 @@ export function VisualizationPanel() {
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Toggle Contour Plot</p>
+              <p>Alternar Gráfico de Contorno</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>

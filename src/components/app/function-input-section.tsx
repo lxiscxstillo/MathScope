@@ -18,7 +18,7 @@ import { GuidedSteps } from './guided-steps';
 import { useAppState } from '@/hooks/use-app-state';
 
 const FormSchema = z.object({
-  func: z.string().min(1, 'Function is required.'),
+  func: z.string().min(1, 'La función es obligatoria.'),
 });
 
 export function FunctionInputSection() {
@@ -59,8 +59,8 @@ export function FunctionInputSection() {
   }, [state.func]);
 
   function onSubmit(data: z.infer<typeof FormSchema>) {
-    console.log('Calculating with function:', data.func);
-    // Trigger calculations here
+    console.log('Calculando con la función:', data.func);
+    // Aquí se activarían los cálculos
   }
 
   const toggleGuidedMode = (checked: boolean) => {
@@ -71,8 +71,8 @@ export function FunctionInputSection() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Function Analysis</CardTitle>
-        <CardDescription>Input a function to visualize and analyze.</CardDescription>
+        <CardTitle>Análisis de Función</CardTitle>
+        <CardDescription>Introduce una función para visualizar y analizar.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -86,12 +86,12 @@ export function FunctionInputSection() {
                     <FormLabel>f(x, y, z) =</FormLabel>
                     {isValid !== null && (
                       <Badge variant={isValid ? 'default' : 'destructive'} className="bg-green-500 hover:bg-green-600 text-white">
-                        {isValid ? 'Valid' : 'Invalid'}
+                        {isValid ? 'Válida' : 'Inválida'}
                       </Badge>
                     )}
                   </div>
                   <FormControl>
-                    <Input placeholder="e.g., sin(x) * cos(y)" {...field} onChange={handleFunctionChange} className="font-code" />
+                    <Input placeholder="Ej: sin(x) * cos(y)" {...field} onChange={handleFunctionChange} className="font-code" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -100,15 +100,15 @@ export function FunctionInputSection() {
 
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="item-1">
-                <AccordionTrigger>Domain and Range</AccordionTrigger>
+                <AccordionTrigger>Dominio y Rango</AccordionTrigger>
                 <AccordionContent className="font-code text-sm space-y-2">
-                  <p>Domain: (-∞, ∞)</p>
-                  <p>Range: [-1, 1]</p>
-                  <p className="text-xs text-muted-foreground pt-2">Estimates are based on numerical analysis.</p>
+                  <p>Dominio: (-∞, ∞)</p>
+                  <p>Rango: [-1, 1]</p>
+                  <p className="text-xs text-muted-foreground pt-2">Estimaciones basadas en análisis numérico.</p>
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-2">
-                <AccordionTrigger>Partial Derivatives & Gradient</AccordionTrigger>
+                <AccordionTrigger>Derivadas Parciales y Gradiente</AccordionTrigger>
                 <AccordionContent className="font-code text-sm space-y-2">
                   <p>∂f/∂x = cos(x) * cos(y)</p>
                   <p>∂f/∂y = -sin(x) * sin(y)</p>
@@ -119,12 +119,12 @@ export function FunctionInputSection() {
             
             <div className="flex items-center space-x-2">
               <Switch id="guided-mode" checked={state.guidedMode} onCheckedChange={toggleGuidedMode} />
-              <Label htmlFor="guided-mode">Guided Calculation Mode</Label>
+              <Label htmlFor="guided-mode">Modo de Cálculo Guiado</Label>
             </div>
             
             {state.guidedMode && <GuidedSteps />}
 
-            <Button type="submit" className="w-full">Calculate & Plot</Button>
+            <Button type="submit" className="w-full">Calcular y Graficar</Button>
           </form>
         </Form>
       </CardContent>

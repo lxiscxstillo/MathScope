@@ -33,8 +33,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Lightbulb } from 'lucide-react';
 
 const FormSchema = z.object({
-  formula: z.string().min(1, 'Please enter a formula.'),
-  language: z.string().min(1, 'Please select a language.'),
+  formula: z.string().min(1, 'Por favor, introduce una fórmula.'),
+  language: z.string().min(1, 'Por favor, selecciona un idioma.'),
 });
 
 type FormValues = z.infer<typeof FormSchema>;
@@ -48,7 +48,7 @@ export function FormulaExplainer() {
     resolver: zodResolver(FormSchema),
     defaultValues: {
       formula: 'e^{i\\pi} + 1 = 0',
-      language: 'English',
+      language: 'Español',
     },
   });
 
@@ -60,7 +60,7 @@ export function FormulaExplainer() {
         const result = await explainFormula(data);
         setExplanation(result.explanation);
       } catch (e) {
-        setError('An error occurred while fetching the explanation. Please try again.');
+        setError('Ocurrió un error al obtener la explicación. Por favor, intenta de nuevo.');
         console.error(e);
       }
     });
@@ -70,9 +70,9 @@ export function FormulaExplainer() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Formula Explanation Tool</CardTitle>
+          <CardTitle>Explicador de Fórmulas</CardTitle>
           <CardDescription>
-            Get an AI-powered explanation for a mathematical formula in your chosen language.
+            Obtén una explicación de IA para una fórmula matemática en el idioma que elijas.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -83,10 +83,10 @@ export function FormulaExplainer() {
                 name="formula"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Formula</FormLabel>
+                    <FormLabel>Fórmula (en formato LaTeX)</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="e.g., f(x) = x^2"
+                        placeholder="Ej: f(x) = x^2"
                         className="font-code"
                         {...field}
                       />
@@ -101,19 +101,19 @@ export function FormulaExplainer() {
                 name="language"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Language</FormLabel>
+                    <FormLabel>Idioma</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a language" />
+                          <SelectValue placeholder="Selecciona un idioma" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="English">English</SelectItem>
-                        <SelectItem value="Spanish">Spanish</SelectItem>
-                        <SelectItem value="French">French</SelectItem>
-                        <SelectItem value="German">German</SelectItem>
-                        <SelectItem value="Japanese">Japanese</SelectItem>
+                        <SelectItem value="Español">Español</SelectItem>
+                        <SelectItem value="Inglés">Inglés</SelectItem>
+                        <SelectItem value="Francés">Francés</SelectItem>
+                        <SelectItem value="Alemán">Alemán</SelectItem>
+                        <SelectItem value="Japonés">Japonés</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -122,7 +122,7 @@ export function FormulaExplainer() {
               />
 
               <Button type="submit" disabled={isPending} className="w-full">
-                {isPending ? 'Generating...' : 'Explain Formula'}
+                {isPending ? 'Generando...' : 'Explicar Fórmula'}
               </Button>
             </form>
           </Form>
@@ -133,7 +133,7 @@ export function FormulaExplainer() {
         <Card>
           <CardHeader className="flex flex-row items-center gap-2">
             <Lightbulb className="w-5 h-5 text-primary" />
-            <CardTitle>Explanation</CardTitle>
+            <CardTitle>Explicación</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             <Skeleton className="h-4 w-3/4" />
@@ -158,7 +158,7 @@ export function FormulaExplainer() {
         <Card>
           <CardHeader className="flex flex-row items-center gap-2">
             <Lightbulb className="w-5 h-5 text-primary" />
-            <CardTitle>Explanation</CardTitle>
+            <CardTitle>Explicación</CardTitle>
           </CardHeader>
           <CardContent className="prose prose-sm max-w-none text-foreground">
             {explanation.split('\n').map((line, i) => (

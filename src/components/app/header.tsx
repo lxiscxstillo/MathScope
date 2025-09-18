@@ -9,15 +9,15 @@ export function Header() {
   const { dispatch } = useAppState();
 
   const handleDemoMode = () => {
-    console.log('Entering Demo Mode');
+    console.log('Activando Modo Demo');
     dispatch({ type: 'SET_FUNCTION', payload: 'x^2 * exp(-x^2 - y^2)' });
     dispatch({ type: 'SET_GUIDED_MODE', payload: true });
-    // In a real app, this would also set graph parameters, etc.
+    // En una app real, esto también ajustaría parámetros del gráfico, etc.
   };
 
   const handleExport = () => {
-    // This would trigger PDF/PNG export logic
-    console.log('Exporting results...');
+    // Esto activaría la lógica para exportar a PDF/PNG
+    console.log('Exportando resultados...');
   };
   
   return (
@@ -31,12 +31,12 @@ export function Header() {
       <div className="ml-auto flex items-center gap-2">
         <Button variant="outline" size="sm" onClick={handleDemoMode}>
           <PlayCircle className="mr-2 h-4 w-4" />
-          Demo Mode
+          Modo Demo
         </Button>
         <Separator orientation="vertical" className="h-6" />
         <Button variant="outline" size="sm" onClick={handleExport}>
           <Download className="mr-2 h-4 w-4" />
-          Export
+          Exportar
         </Button>
       </div>
     </header>

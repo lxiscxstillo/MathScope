@@ -29,12 +29,12 @@ export function HistorySection() {
       <CardHeader>
         <div className="flex justify-between items-center">
           <div>
-            <CardTitle>Calculation History</CardTitle>
-            <CardDescription>Review and restore previous sessions.</CardDescription>
+            <CardTitle>Historial de Cálculos</CardTitle>
+            <CardDescription>Revisa y restaura sesiones anteriores.</CardDescription>
           </div>
           {history.length > 0 && (
             <Button variant="destructive" size="sm" onClick={clearHistory}>
-              <Trash2 className="mr-2 h-4 w-4" /> Clear All
+              <Trash2 className="mr-2 h-4 w-4" /> Limpiar Todo
             </Button>
           )}
         </div>
@@ -44,8 +44,8 @@ export function HistorySection() {
           {history.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-8">
               <History className="h-12 w-12 mb-4" />
-              <p>No history yet.</p>
-              <p className="text-sm">Your calculations will be saved here automatically.</p>
+              <p>Aún no hay historial.</p>
+              <p className="text-sm">Tus cálculos se guardarán aquí automáticamente.</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -54,7 +54,7 @@ export function HistorySection() {
                   <div className="truncate">
                     <p className="font-medium font-code truncate text-sm">f(x) = {item.func}</p>
                     <p className="text-xs text-muted-foreground">
-                      Saved: {new Date(item.lastSaved || Date.now()).toLocaleString()}
+                      Guardado: {new Date(item.lastSaved || Date.now()).toLocaleString()}
                     </p>
                   </div>
                   <div className="flex gap-1 ml-2">
