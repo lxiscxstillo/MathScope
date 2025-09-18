@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { explainFormula } from '@/lib/actions';
+import { explainFormula } from '@/ai/flows/formula-explanation';
 import { Button } from '@/components/ui/button';
 import {
   Card,
