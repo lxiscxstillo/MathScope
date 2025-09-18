@@ -50,15 +50,21 @@ export function VisualizationPanel() {
           </div>
         </CardHeader>
         <CardContent className="flex-1 flex items-center justify-center relative bg-background rounded-b-lg overflow-hidden">
-          {error && (
+          {error ? (
             <div className="absolute inset-0 flex items-center justify-center z-10">
               <Alert variant="destructive" className="w-auto">
                 <Frown className="h-4 w-4" />
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             </div>
+          ) : !funcStr ? (
+            <EmptyState />
+          ) : (
+            <div className="z-10 text-center p-4">
+              <p className="text-lg font-medium">Visualización de:</p>
+              <p className="text-sm font-code text-primary mt-2">{funcStr}</p>
+            </div>
           )}
-          <EmptyState />
         </CardContent>
       </Card>
     </div>
