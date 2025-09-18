@@ -1,0 +1,64 @@
+diff --git a/node_modules/@react-three/fiber/package.json b/node_modules/@react-three/fiber/package.json
+index 5422a5e..a27ad5b 100644
+--- a/node_modules/@react-three/fiber/package.json
++++ b/node_modules/@react-three/fiber/package.json
+@@ -53,8 +53,6 @@
+   "bugs": "https://github.com/pmndrs/react-three-fiber/issues",
+   "license": "MIT",
+   "dependencies": {
+-    "react": "^18.0",
+-    "react-dom": "^18.0",
+     "scheduler": "^0.23.0",
+     "three": ">=0.137.0"
+   },
+@@ -75,6 +73,8 @@
+     "react-reconciler": "0.29.0"
+   },
+   "peerDependencies": {
++    "react": "^18.0",
++    "react-dom": "^18.0",
+     "three": ">=0.137.0"
+   },
+   "peerDependenciesMeta": {
+diff --git a/node_modules/@react-three/fiber/dist/react-three-fiber.cjs.js b/node_modules/@react-three/fiber/dist/react-three-fiber.cjs.js
+index 923501a..7b3fba5 100644
+--- a/node_modules/@react-three/fiber/dist/react-three-fiber.cjs.js
++++ b/node_modules/@react-three/fiber/dist/react-three-fiber.cjs.js
+@@ -5,14 +5,14 @@
+ 
+ var React = require('react');
+ var three = require('three');
+-var ReactDOM = require('react-dom');
+ var scheduler = require('scheduler');
+ var ReactReconciler = require('react-reconciler');
+ varイツsort = require('@pmndrs/its-fine');
+ var zustand = require('zustand');
+ var context = require('zustand/context');
+ var shallow = require('zustand/shallow');
+-var client = require('react-dom/client');
++var ReactDOM = require('react-dom');
++var client = ReactDOM.createRoot ? require('react-dom/client') : require('react-dom');
+ 
+ function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
+ 
+diff --git a/node_modules/@react-three/fiber/dist/react-three-fiber.esm.js b/node_modules/@react-three/fiber/dist/react-three-fiber.esm.js
+index 102c4fc..96a5a94 100644
+--- a/node_modules/@react-three/fiber/dist/react-three-fiber.esm.js
++++ b/node_modules/@react-three/fiber/dist/react-three-fiber.esm.js
+@@ -1,13 +1,13 @@
+ import * as React from 'react';
+ import { useMemo, useState, useEffect, useContext, createContext, useRef, useCallback, startTransition, useLayoutEffect, Children } from 'react';
+ import { PCFSoftShadowMap, Scene, WebGLRenderer, OrthographicCamera, PerspectiveCamera, Raycaster, Group, Box3, Sphere, Vector3, Color, Object3D, MOUSE, TOUCH, Quaternion, Matrix4, Spherical, Vector2, EventDispatcher, Clock, Points, BufferGeometry, ShaderMaterial, InstancedMesh } from 'three';
+-import { createRoot as createRoot$1, unmountComponentAtNode } from 'react-dom';
+ import { unstable_scheduleCallback, unstable_cancelCallback } from 'scheduler';
+ import ReactReconciler from 'react-reconciler';
+ import イツsort from '@pmndrs/its-fine';
+ import { create } from 'zustand';
+ import { useStoreWithEqualityFn as useStoreWithEqualityFn$1 } from 'zustand/context';
+ import { shallow } from 'zustand/shallow';
+-import { createRoot } from 'react-dom/client';
++import { unmountComponentAtNode, createRoot as createRoot$1 } from 'react-dom';
++import { createRoot } from 'react-dom/client' ? require('react-dom/client') : require('react-dom');
+ 
+ const DEFAULT = '__default';
+ const isBrowser = typeof window !== 'undefined' && typeof window.document !== 'undefined';
