@@ -13,7 +13,6 @@ import {
   YAxis,
   CartesianGrid,
   ResponsiveContainer,
-  ReferenceLine,
 } from 'recharts';
 import {
   ChartContainer,
