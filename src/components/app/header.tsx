@@ -5,6 +5,7 @@ import { Cube } from '@/components/icons';
 import { PlayCircle, Download } from 'lucide-react';
 import { useAppState } from '@/hooks/use-app-state';
 import { useToast } from '@/hooks/use-toast';
+import html2canvas from 'html2canvas';
 
 export function Header() {
   const { dispatch } = useAppState();
@@ -22,11 +23,40 @@ export function Header() {
   };
 
   const handleExport = () => {
-    toast({
-      title: 'Función no implementada',
-      description: 'La exportación a PDF/PNG estará disponible próximamente.',
-      variant: 'destructive',
-    });
+    const visualizationPanel = document.getElementById('visualization-panel');
+    if (visualizationPanel) {
+      toast({
+        title: 'Exportando...',
+        description: 'Se está generando la imagen de la visualización.',
+      });
+      html2canvas(visualizationPanel, {
+        allowTaint: true,
+        useCORS: true,
+        backgroundColor: '#f0f4f8', // Un color de fondo similar al de la app
+      }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = 'calculo.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+         toast({
+          title: 'Exportación Completa',
+          description: 'La imagen ha sido descargada.',
+        });
+      }).catch(err => {
+        console.error('Error al exportar:', err);
+        toast({
+          variant: 'destructive',
+          title: 'Error de Exportación',
+          description: 'No se pudo generar la imagen. Intenta de nuevo.',
+        });
+      });
+    } else {
+       toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'No se encontró el panel de visualización para exportar.',
+      });
+    }
   };
   
   return (

@@ -22,7 +22,7 @@ export function VisualizationPanel() {
   };
 
   return (
-    <div className="flex-1 flex flex-col p-4 bg-muted/30">
+    <div id="visualization-panel" className="flex-1 flex flex-col p-4 bg-muted/30">
       <Card className="flex-1 flex flex-col">
         <CardHeader>
           <div className="flex justify-between items-start">
