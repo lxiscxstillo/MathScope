@@ -2,6 +2,7 @@
 import React, { useRef, useEffect, useState, useMemo } from 'react';
 import * as math from 'mathjs';
 import * as d3 from 'd3-zoom';
+import { select } from 'd3-selection';
 import { scaleLinear, ScaleLinear } from 'd3-scale';
 import { useAppState } from '@/hooks/use-app-state';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -50,7 +51,7 @@ export function VisualizationPanel() {
         });
     
     zoomRef.current = zoomBehavior;
-    d3.select(canvas).call(zoomBehavior);
+    select(canvas).call(zoomBehavior);
 
     // Initial transform setup
     const { width, height } = canvas.getBoundingClientRect();
@@ -59,12 +60,12 @@ export function VisualizationPanel() {
         .translate(width / 2, height / 2)
         .scale(initialScale);
     
-    d3.select(canvas).call(zoomBehavior.transform, initialTransform);
+    select(canvas).call(zoomBehavior.transform, initialTransform);
     setTransform(initialTransform);
 
 
      // Reset zoom when function changes
-    const selection = d3.select(canvas);
+    const selection = select(canvas);
     selection.call(zoomBehavior.transform, initialTransform);
     toast({ title: 'Vista Restablecida', description: 'El zoom y la posición se han reiniciado.' });
 
@@ -88,15 +89,15 @@ export function VisualizationPanel() {
     const yScale = transform.rescaleY(scaleLinear().domain([-height / 2, height / 2]).range([height, 0]));
     
     // Draw grid, axes, and function
-    drawGrid(context, xScale, yScale);
-    drawAxes(context, xScale, yScale);
+    drawGrid(context, xScale, yScale, width, height);
+    drawAxes(context, xScale, yScale, width, height);
     if (parsedFunc && !error) {
-        drawFunction(context, parsedFunc, xScale, yScale);
+        drawFunction(context, parsedFunc, xScale, yScale, width);
     }
 
   }, [transform, parsedFunc, error]);
 
-  const drawGrid = (ctx: CanvasRenderingContext2D, xScale: ScaleLinear<number, number>, yScale: ScaleLinear<number, number>) => {
+  const drawGrid = (ctx: CanvasRenderingContext2D, xScale: ScaleLinear<number, number>, yScale: ScaleLinear<number, number>, width: number, height: number) => {
     ctx.beginPath();
     ctx.strokeStyle = 'hsl(var(--border))';
     ctx.lineWidth = 0.5;
@@ -117,7 +118,7 @@ export function VisualizationPanel() {
     ctx.stroke();
 };
 
-const drawAxes = (ctx: CanvasRenderingContext2D, xScale: ScaleLinear<number, number>, yScale: ScaleLinear<number, number>) => {
+const drawAxes = (ctx: CanvasRenderingContext2D, xScale: ScaleLinear<number, number>, yScale: ScaleLinear<number, number>, width: number, height: number) => {
     ctx.beginPath();
     ctx.strokeStyle = 'hsl(var(--foreground) / 0.7)';
     ctx.lineWidth = 1.5;
@@ -153,12 +154,10 @@ const drawAxes = (ctx: CanvasRenderingContext2D, xScale: ScaleLinear<number, num
     });
 };
 
-const drawFunction = (ctx: CanvasRenderingContext2D, func: math.MathNode, xScale: ScaleLinear<number, number>, yScale: ScaleLinear<number, number>) => {
+const drawFunction = (ctx: CanvasRenderingContext2D, func: math.EvalFunction, xScale: ScaleLinear<number, number>, yScale: ScaleLinear<number, number>, width: number) => {
     ctx.beginPath();
     ctx.strokeStyle = 'hsl(var(--primary))';
     ctx.lineWidth = 2;
-
-    const [xMin, xMax] = xScale.domain();
     
     for (let i = 0; i <= width; i++) {
         const x = xScale.invert(i);
@@ -182,9 +181,6 @@ const drawFunction = (ctx: CanvasRenderingContext2D, func: math.MathNode, xScale
     }
     ctx.stroke();
 };
-
-
-  const { width, height } = canvasRef.current?.getBoundingClientRect() || { width: 0, height: 0 };
 
   return (
     <div id="visualization-panel" className="flex-1 flex flex-col p-4 bg-muted/30">
