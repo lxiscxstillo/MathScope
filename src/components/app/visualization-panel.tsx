@@ -15,9 +15,10 @@ import {
 import { useAppState } from '@/hooks/use-app-state';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Frown } from 'lucide-react';
+import { Frown, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-const generatePlotData = (func: string, domain = [-5, 5], resolution = 40) => {
+const generatePlotData = (func: string, domain: [number, number] = [-5, 5], resolution = 40) => {
   if (!func) return { data: [], error: null, zDomain: [0,0] };
 
   let node;
@@ -71,17 +72,36 @@ const CustomTooltip = ({ active, payload }: any) => {
 };
 
 export function VisualizationPanel() {
-  const { state } = useAppState();
-  const { data, error, zDomain } = useMemo(() => generatePlotData(state.func), [state.func]);
+  const { state, dispatch } = useAppState();
+  const { data, error, zDomain } = useMemo(() => generatePlotData(state.func, state.domain), [state.func, state.domain]);
+  
+  const handleZoomIn = () => dispatch({ type: 'ZOOM_IN' });
+  const handleZoomOut = () => dispatch({ type: 'ZOOM_OUT' });
+  const handleResetZoom = () => dispatch({ type: 'RESET_ZOOM' });
 
   return (
     <div className="flex-1 flex flex-col p-4 bg-muted/30">
       <Card className="flex-1 flex flex-col">
         <CardHeader>
-          <CardTitle>Visualización de la Función</CardTitle>
-          <CardDescription className="font-code text-primary">
-            {state.func || "Ninguna función definida"}
-          </CardDescription>
+            <div className="flex justify-between items-start">
+            <div>
+                <CardTitle>Visualización de la Función</CardTitle>
+                <CardDescription className="font-code text-primary pt-1">
+                {state.func || "Ninguna función definida"}
+                </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+                <Button variant="outline" size="icon" onClick={handleZoomIn} title="Acercar">
+                    <ZoomIn className="h-4 w-4" />
+                </Button>
+                 <Button variant="outline" size="icon" onClick={handleZoomOut} title="Alejar">
+                    <ZoomOut className="h-4 w-4" />
+                </Button>
+                 <Button variant="outline" size="icon" onClick={handleResetZoom} title="Restablecer Zoom">
+                    <RotateCcw className="h-4 w-4" />
+                </Button>
+            </div>
+            </div>
         </CardHeader>
         <CardContent className="flex-1 flex items-center justify-center">
           {error && (
@@ -96,9 +116,9 @@ export function VisualizationPanel() {
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" dataKey="x" name="x" unit="" domain={['dataMin', 'dataMax']} />
-                <YAxis type="number" dataKey="y" name="y" unit="" domain={['dataMin', 'dataMax']} />
-                <ZAxis type="number" dataKey="z" name="z" range={[1, 200]} domain={zDomain} />
+                <XAxis type="number" dataKey="x" name="x" unit="" domain={state.domain} />
+                <YAxis type="number" dataKey="y" name="y" unit="" domain={state.domain} />
+                <ZAxis type="number" dataKey="z" range={[1, 200]} domain={zDomain} />
                 <Tooltip cursor={{ strokeDasharray: '3 3' }} content={<CustomTooltip />} />
                 <Legend />
                 <Scatter name="f(x, y)" data={data} fill="hsl(var(--primary))" shape="dot" />
