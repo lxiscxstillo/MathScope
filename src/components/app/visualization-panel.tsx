@@ -128,8 +128,6 @@ export function VisualizationPanel() {
                       formatter={(value) => typeof value === 'number' ? value.toFixed(3) : 'N/A'}
                     />}
                   />
-                  <ReferenceLine y={0} stroke="hsl(var(--foreground))" strokeOpacity={0.5} />
-                  <ReferenceLine x={0} stroke="hsl(var(--foreground))" strokeOpacity={0.5} />
                   <Line 
                     type="monotone" 
                     dataKey="y" 
