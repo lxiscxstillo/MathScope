@@ -16,6 +16,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { GuidedSteps } from './guided-steps';
 import { useAppState } from '@/hooks/use-app-state';
+import { useToast } from '@/hooks/use-toast';
 
 const FormSchema = z.object({
   func: z.string().min(1, 'La función es obligatoria.'),
@@ -24,6 +25,7 @@ const FormSchema = z.object({
 export function FunctionInputSection() {
   const { state, dispatch } = useAppState();
   const [isValid, setIsValid] = useState<boolean | null>(null);
+  const { toast } = useToast();
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -59,8 +61,12 @@ export function FunctionInputSection() {
   }, [state.func]);
 
   function onSubmit(data: z.infer<typeof FormSchema>) {
-    console.log('Calculando con la función:', data.func);
-    // Aquí se activarían los cálculos
+    dispatch({ type: 'SET_FUNCTION', payload: data.func });
+    toast({
+      title: 'Cálculo Iniciado',
+      description: `Analizando y graficando la función: ${data.func}`,
+    });
+    // En una implementación futura, aquí se iniciarían los cálculos del backend.
   }
 
   const toggleGuidedMode = (checked: boolean) => {

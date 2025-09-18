@@ -4,20 +4,29 @@ import { Separator } from '@/components/ui/separator';
 import { Cube } from '@/components/icons';
 import { PlayCircle, Download } from 'lucide-react';
 import { useAppState } from '@/hooks/use-app-state';
+import { useToast } from '@/hooks/use-toast';
 
 export function Header() {
   const { dispatch } = useAppState();
+  const { toast } = useToast();
 
   const handleDemoMode = () => {
-    console.log('Activando Modo Demo');
-    dispatch({ type: 'SET_FUNCTION', payload: 'x^2 * exp(-x^2 - y^2)' });
+    const demoFunc = 'x^2 * exp(-x^2 - y^2)';
+    dispatch({ type: 'SET_FUNCTION', payload: demoFunc });
     dispatch({ type: 'SET_GUIDED_MODE', payload: true });
-    // En una app real, esto también ajustaría parámetros del gráfico, etc.
+    
+    toast({
+      title: 'Modo Demo Activado',
+      description: `Se ha cargado la función de ejemplo: ${demoFunc}`,
+    });
   };
 
   const handleExport = () => {
-    // Esto activaría la lógica para exportar a PDF/PNG
-    console.log('Exportando resultados...');
+    toast({
+      title: 'Función no implementada',
+      description: 'La exportación a PDF/PNG estará disponible próximamente.',
+      variant: 'destructive',
+    });
   };
   
   return (
