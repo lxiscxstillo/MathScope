@@ -1,0 +1,172 @@
+'use client';
+
+import { useState, useTransition } from 'react';
+import { useForm, SubmitHandler } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { explainFormula } from '@/lib/actions';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Lightbulb } from 'lucide-react';
+
+const FormSchema = z.object({
+  formula: z.string().min(1, 'Please enter a formula.'),
+  language: z.string().min(1, 'Please select a language.'),
+});
+
+type FormValues = z.infer<typeof FormSchema>;
+
+export function FormulaExplainer() {
+  const [isPending, startTransition] = useTransition();
+  const [explanation, setExplanation] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(FormSchema),
+    defaultValues: {
+      formula: 'e^{i\\pi} + 1 = 0',
+      language: 'English',
+    },
+  });
+
+  const onSubmit: SubmitHandler<FormValues> = (data) => {
+    startTransition(async () => {
+      setError(null);
+      setExplanation(null);
+      try {
+        const result = await explainFormula(data);
+        setExplanation(result.explanation);
+      } catch (e) {
+        setError('An error occurred while fetching the explanation. Please try again.');
+        console.error(e);
+      }
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Formula Explanation Tool</CardTitle>
+          <CardDescription>
+            Get an AI-powered explanation for a mathematical formula in your chosen language.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="formula"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Formula</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="e.g., f(x) = x^2"
+                        className="font-code"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="language"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Language</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a language" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="English">English</SelectItem>
+                        <SelectItem value="Spanish">Spanish</SelectItem>
+                        <SelectItem value="French">French</SelectItem>
+                        <SelectItem value="German">German</SelectItem>
+                        <SelectItem value="Japanese">Japanese</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <Button type="submit" disabled={isPending} className="w-full">
+                {isPending ? 'Generating...' : 'Explain Formula'}
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+
+      {isPending && (
+        <Card>
+          <CardHeader className="flex flex-row items-center gap-2">
+            <Lightbulb className="w-5 h-5 text-primary" />
+            <CardTitle>Explanation</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-5/6" />
+          </CardContent>
+        </Card>
+      )}
+
+      {error && (
+        <Card className="border-destructive">
+          <CardHeader>
+            <CardTitle className="text-destructive">Error</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>{error}</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {explanation && (
+        <Card>
+          <CardHeader className="flex flex-row items-center gap-2">
+            <Lightbulb className="w-5 h-5 text-primary" />
+            <CardTitle>Explanation</CardTitle>
+          </CardHeader>
+          <CardContent className="prose prose-sm max-w-none text-foreground">
+            {explanation.split('\n').map((line, i) => (
+              <p key={i}>{line}</p>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
