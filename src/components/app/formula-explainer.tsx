@@ -134,7 +134,7 @@ export function FormulaExplainer() {
           <CardHeader className="flex flex-row items-center gap-2">
             <Lightbulb className="w-5 h-5 text-primary" />
             <CardTitle>Explicación</CardTitle>
-          </Header>
+          </CardHeader>
           <CardContent className="space-y-2">
             <Skeleton className="h-4 w-3/4" />
             <Skeleton className="h-4 w-full" />
@@ -147,7 +147,7 @@ export function FormulaExplainer() {
         <Card className="border-destructive">
           <CardHeader>
             <CardTitle className="text-destructive">Error</CardTitle>
-          </Header>
+          </CardHeader>
           <CardContent>
             <p>{error}</p>
           </CardContent>
@@ -159,7 +159,7 @@ export function FormulaExplainer() {
           <CardHeader className="flex flex-row items-center gap-2">
             <Lightbulb className="w-5 h-5 text-primary" />
             <CardTitle>Explicación</CardTitle>
-          </Header>
+          </CardHeader>
           <CardContent className="prose prose-sm max-w-none text-foreground">
             {explanation.split('\n').map((line, i) => (
               <p key={i}>{line}</p>
