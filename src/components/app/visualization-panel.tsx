@@ -37,9 +37,46 @@ function Surface({ func, domain }: { func: (x: number, y: number) => number; dom
         positions[i + 2] = 0; // O un valor neutro si la función falla
       }
     }
-
+    
     geometry.computeVertexNormals();
     geometry.attributes.position.needsUpdate = true;
+    
+    // Asignar colores basados en la altura (Z)
+    const colors: number[] = [];
+    const positionsAttribute = geometry.attributes.position;
+    let minZ = Infinity;
+    let maxZ = -Infinity;
+
+    for (let i = 0; i < positionsAttribute.count; i++) {
+        const z = positionsAttribute.getZ(i);
+        if (z < minZ) minZ = z;
+        if (z > maxZ) maxZ = z;
+    }
+
+    const color = new THREE.Color();
+    const blue = new THREE.Color(0x1e40af); // Azul oscuro
+    const red = new THREE.Color(0xbe123c); // Rojo
+    const green = new THREE.Color(0x16a34a); // Verde
+    
+    const lowColor = blue;
+    const midColor = green;
+    const highColor = red;
+
+    for (let i = 0; i < positionsAttribute.count; i++) {
+        const z = positionsAttribute.getZ(i);
+        const alpha = (z - minZ) / (maxZ - minZ);
+        
+        if (alpha < 0.5) {
+            color.lerpColors(lowColor, midColor, alpha * 2);
+        } else {
+            color.lerpColors(midColor, highColor, (alpha - 0.5) * 2);
+        }
+        
+        colors.push(color.r, color.g, color.b);
+    }
+
+    geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+    
     return geometry;
   }, [func, domain]);
 
@@ -58,6 +95,8 @@ function AxesHelper({ domain }: { domain: [number, number] }) {
 
   useEffect(() => {
     const axes = new THREE.AxesHelper(size);
+    (axes.material as THREE.Material).depthTest = false;
+    axes.renderOrder = 1;
     scene.add(axes);
 
     const grid = new THREE.GridHelper(size * 2, 20);
@@ -131,9 +170,9 @@ export function VisualizationPanel() {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             ) : func ? (
-              <Canvas camera={{ position: [5, 5, 5], fov: 50 }}>
-                <ambientLight intensity={0.5} />
-                <pointLight position={[10, 10, 10]} intensity={1} />
+              <Canvas camera={{ position: [domain[1] * 1.5, domain[1] * 1.5, domain[1] * 1.5], fov: 50 }}>
+                <ambientLight intensity={0.8} />
+                <pointLight position={[10, 10, 10]} intensity={1.5} />
                 <Surface func={func} domain={domain} />
                 <AxesHelper domain={domain} />
                 <OrbitControls />
