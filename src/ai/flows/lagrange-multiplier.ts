@@ -12,7 +12,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 
 const PointSchema = z.object({
-  point: z.string().describe('Las coordenadas del punto óptimo, ej. (x, y) o (x, y, z).'),
+  point: z.string().describe('Las coordenadas del punto óptimo en formato LaTeX, ej. "(\\frac{\\sqrt{2}}{2}, \\frac{\\sqrt{2}}{2})".'),
   value: z.number().describe('El valor de la función objetivo en ese punto.'),
 });
 
@@ -48,7 +48,7 @@ Pasos a seguir:
 3. Iguala el gradiente a cero para obtener el sistema de ecuaciones.
 4. Resuelve el sistema de ecuaciones para encontrar los puntos críticos (x, y) y el valor de λ.
 5. Evalúa la función objetivo f(x, y) en cada punto crítico para determinar si es un máximo o un mínimo.
-6. Formatea la salida en el JSON especificado. Los pasos detallados del cálculo deben estar en formato Markdown. **IMPORTANTE**: Todas las expresiones matemáticas, variables y ecuaciones deben estar en formato LaTeX. Usa '$' para matemáticas inline (ej. $f(x)=x^2$) y '$$' para ecuaciones en bloque (ej. $$\\nabla L = 0$$). Asegúrate de que los arrays 'maxima' y 'minima' contengan todos los puntos encontrados.
+6. Formatea la salida en el JSON especificado. Los pasos detallados del cálculo deben estar en formato Markdown. **IMPORTANTE**: Todas las expresiones matemáticas, variables y ecuaciones deben estar en formato LaTeX. Usa '$' para matemáticas inline (ej. $f(x)=x^2$) y '$$' para ecuaciones en bloque (ej. $$\\nabla L = 0$$). Las coordenadas de los puntos en 'maxima' y 'minima' también deben estar en formato LaTeX. Asegúrate de que los arrays 'maxima' y 'minima' contengan todos los puntos encontrados.
 `,
 });
 

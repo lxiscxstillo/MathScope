@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { ArrowDown, ArrowUp, BrainCircuit } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
 import ReactMarkdown from 'react-markdown';
@@ -149,8 +150,9 @@ export function OptimizationSection() {
                   Máximo(s)
                 </h4>
                 {result.maxima.map((m, i) => (
-                  <p key={i} className="font-code text-sm pl-7">
-                    f = {m.value.toFixed(4)} en {m.point}
+                   <p key={i} className="font-code text-sm pl-7 flex items-center gap-2">
+                    <span>f = {m.value.toFixed(4)} en </span>
+                    <InlineMath math={m.point} />
                   </p>
                 ))}
               </div>
@@ -162,8 +164,9 @@ export function OptimizationSection() {
                   Mínimo(s)
                 </h4>
                 {result.minima.map((m, i) => (
-                  <p key={i} className="font-code text-sm pl-7">
-                    f = {m.value.toFixed(4)} en {m.point}
+                  <p key={i} className="font-code text-sm pl-7 flex items-center gap-2">
+                    <span>f = {m.value.toFixed(4)} en </span>
+                    <InlineMath math={m.point} />
                   </p>
                 ))}
               </div>
@@ -175,9 +178,11 @@ export function OptimizationSection() {
                     Ver Pasos del Cálculo
                   </AccordionTrigger>
                   <AccordionContent>
-                      <div className="prose prose-sm max-w-none text-foreground p-2 bg-background rounded-md">
-                        <MarkdownRenderer content={result.calculationSteps} />
-                      </div>
+                      <ScrollArea className="h-72 w-full pr-4">
+                        <div className="prose prose-sm max-w-none text-foreground p-2 bg-background rounded-md">
+                          <MarkdownRenderer content={result.calculationSteps} />
+                        </div>
+                      </ScrollArea>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
