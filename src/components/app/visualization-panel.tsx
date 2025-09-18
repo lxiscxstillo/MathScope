@@ -1,151 +1,212 @@
 'use client';
-
-import React, { useMemo } from 'react';
+import React, { useRef, useEffect, useState, useMemo } from 'react';
 import * as math from 'mathjs';
+import * as d3 from 'd3-zoom';
+import { scaleLinear, ScaleLinear } from 'd3-scale';
 import { useAppState } from '@/hooks/use-app-state';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ZoomIn, ZoomOut, RotateCcw, AlertTriangle } from 'lucide-react';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  ResponsiveContainer,
-} from 'recharts';
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart"
+import { AlertTriangle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
-const CHART_POINTS = 200;
+const TICK_MIN_SPACING = 50; // Minimum pixels between ticks
 
 export function VisualizationPanel() {
-  const { state, dispatch } = useAppState();
-  const { func: funcStr, domain } = state;
+  const { state } = useAppState();
+  const { func: funcStr } = state;
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const zoomRef = useRef<d3.ZoomBehavior<HTMLCanvasElement, unknown>>();
+  const [transform, setTransform] = useState(d3.zoomIdentity);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
-  const { data: chartData, error, yDomain } = useMemo(() => {
-    if (!funcStr) return { data: [], error: null, yDomain: [-5, 5] };
+  const parsedFunc = useMemo(() => {
+    if (!funcStr) {
+      setError(null);
+      return null;
+    }
     try {
       const node = math.parse(funcStr);
-      const code = node.compile();
-      const [min, max] = domain;
-      if (min === max) return { data: [], error: null, yDomain: [-5, 5]};
-      const step = (max - min) / (CHART_POINTS - 1);
-      const data = [];
-      let maxAbsY = 0;
-
-      for (let i = 0; i < CHART_POINTS; i++) {
-        const x = min + i * step;
-        let y = null;
-        try {
-           y = code.evaluate({ x });
-           if (!isFinite(y) || Math.abs(y) > 1e6) { // Limit extreme values
-             y = null;
-           } else {
-             maxAbsY = Math.max(maxAbsY, Math.abs(y));
-           }
-        } catch (e) {
-          // If a point fails, we skip it
-        }
-        data.push({ x: Number(x.toFixed(4)), y });
-      }
-      
-      const yRange = maxAbsY === 0 ? 5 : Math.max(maxAbsY, Math.abs(domain[0]), Math.abs(domain[1]));
-      const finalYDomain: [number, number] = [-yRange, yRange];
-
-      return { data, error: null, yDomain: finalYDomain };
-    } catch (error) {
-      console.error("Error parsing or evaluating function:", error);
-      return { data: [], error: "No se pudo evaluar la función. Revisa la sintaxis.", yDomain: [-5, 5] };
+      const compiled = node.compile();
+       // Test evaluation
+      compiled.evaluate({ x: 1, y: 1 });
+      setError(null);
+      return compiled;
+    } catch (e: any) {
+      console.error("Error parsing function:", e);
+      setError(`Error en la función: ${e.message}`);
+      return null;
     }
-  }, [funcStr, domain]);
+  }, [funcStr]);
 
-  const handleZoomIn = () => dispatch({ type: 'ZOOM_IN' });
-  const handleZoomOut = () => dispatch({ type: 'ZOOM_OUT' });
-  const handleResetZoom = () => dispatch({ type: 'RESET_ZOOM' });
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const zoomBehavior = d3.zoom<HTMLCanvasElement, unknown>()
+        .scaleExtent([0.1, 20]) // Zoom range
+        .on('zoom', (event) => {
+            setTransform(event.transform);
+        });
+    
+    zoomRef.current = zoomBehavior;
+    d3.select(canvas).call(zoomBehavior);
+
+    // Initial transform setup
+    const { width, height } = canvas.getBoundingClientRect();
+    const initialScale = Math.min(width, height) / 10;
+    const initialTransform = d3.zoomIdentity
+        .translate(width / 2, height / 2)
+        .scale(initialScale);
+    
+    d3.select(canvas).call(zoomBehavior.transform, initialTransform);
+    setTransform(initialTransform);
+
+
+     // Reset zoom when function changes
+    const selection = d3.select(canvas);
+    selection.call(zoomBehavior.transform, initialTransform);
+    toast({ title: 'Vista Restablecida', description: 'El zoom y la posición se han reiniciado.' });
+
+
+  }, [funcStr, toast]);
+
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const context = canvas?.getContext('2d');
+    if (!context || !canvas) return;
+
+    const { width, height } = canvas.getBoundingClientRect();
+    canvas.width = width;
+    canvas.height = height;
+
+    context.clearRect(0, 0, width, height);
+
+    // Create scales for x and y axes based on d3 transform
+    const xScale = transform.rescaleX(scaleLinear().domain([-width / 2, width / 2]).range([0, width]));
+    const yScale = transform.rescaleY(scaleLinear().domain([-height / 2, height / 2]).range([height, 0]));
+    
+    // Draw grid, axes, and function
+    drawGrid(context, xScale, yScale);
+    drawAxes(context, xScale, yScale);
+    if (parsedFunc && !error) {
+        drawFunction(context, parsedFunc, xScale, yScale);
+    }
+
+  }, [transform, parsedFunc, error]);
+
+  const drawGrid = (ctx: CanvasRenderingContext2D, xScale: ScaleLinear<number, number>, yScale: ScaleLinear<number, number>) => {
+    ctx.beginPath();
+    ctx.strokeStyle = 'hsl(var(--border))';
+    ctx.lineWidth = 0.5;
+
+    const xTicks = xScale.ticks(width / TICK_MIN_SPACING);
+    const yTicks = yScale.ticks(height / TICK_MIN_SPACING);
+
+    xTicks.forEach(tick => {
+        ctx.moveTo(xScale(tick), 0);
+        ctx.lineTo(xScale(tick), height);
+    });
+
+    yTicks.forEach(tick => {
+        ctx.moveTo(0, yScale(tick));
+        ctx.lineTo(width, yScale(tick));
+    });
+
+    ctx.stroke();
+};
+
+const drawAxes = (ctx: CanvasRenderingContext2D, xScale: ScaleLinear<number, number>, yScale: ScaleLinear<number, number>) => {
+    ctx.beginPath();
+    ctx.strokeStyle = 'hsl(var(--foreground) / 0.7)';
+    ctx.lineWidth = 1.5;
+
+    // Y-axis (at x=0)
+    ctx.moveTo(xScale(0), 0);
+    ctx.lineTo(xScale(0), height);
+
+    // X-axis (at y=0)
+    ctx.moveTo(0, yScale(0));
+    ctx.lineTo(width, yScale(0));
+
+    ctx.stroke();
+
+    // Draw labels
+    ctx.fillStyle = 'hsl(var(--muted-foreground))';
+    ctx.font = '12px Inter';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+
+    const xTicks = xScale.ticks(width / TICK_MIN_SPACING);
+    xTicks.forEach(tick => {
+        if (tick === 0) return;
+        ctx.fillText(tick.toString(), xScale(tick), yScale(0) + 5);
+    });
+
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    const yTicks = yScale.ticks(height / TICK_MIN_SPACING);
+    yTicks.forEach(tick => {
+        if (tick === 0) return;
+        ctx.fillText(tick.toString(), xScale(0) - 5, yScale(tick));
+    });
+};
+
+const drawFunction = (ctx: CanvasRenderingContext2D, func: math.MathNode, xScale: ScaleLinear<number, number>, yScale: ScaleLinear<number, number>) => {
+    ctx.beginPath();
+    ctx.strokeStyle = 'hsl(var(--primary))';
+    ctx.lineWidth = 2;
+
+    const [xMin, xMax] = xScale.domain();
+    
+    for (let i = 0; i <= width; i++) {
+        const x = xScale.invert(i);
+        try {
+            const y = func.evaluate({ x });
+             if (!isFinite(y)) {
+                ctx.stroke(); // End current path
+                ctx.beginPath(); // Start a new one
+                continue;
+            }
+            const yPos = yScale(y);
+
+            if (i === 0) {
+                ctx.moveTo(i, yPos);
+            } else {
+                ctx.lineTo(i, yPos);
+            }
+        } catch (e) {
+            // function might be undefined at this point, just skip
+        }
+    }
+    ctx.stroke();
+};
+
+
+  const { width, height } = canvasRef.current?.getBoundingClientRect() || { width: 0, height: 0 };
 
   return (
     <div id="visualization-panel" className="flex-1 flex flex-col p-4 bg-muted/30">
       <Card className="flex-1 flex flex-col">
         <CardHeader>
-          <div className="flex justify-between items-start">
-            <div>
-              <CardTitle>Calculadora Gráfica</CardTitle>
-              <CardDescription className="font-code text-primary pt-1">
-                f(x) = {funcStr || 'Ninguna función definida'}
-              </CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon" onClick={handleZoomIn} title="Acercar">
-                <ZoomIn className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="icon" onClick={handleZoomOut} title="Alejar">
-                <ZoomOut className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="icon" onClick={handleResetZoom} title="Restablecer Vista">
-                <RotateCcw className="h-4 w-4" />
-              </Button>
-            </div>
+          <div>
+            <CardTitle>Calculadora Gráfica</CardTitle>
+            <CardDescription className="font-code text-primary pt-1">
+              f(x) = {funcStr || 'Ninguna función definida'}
+            </CardDescription>
           </div>
         </CardHeader>
-        <CardContent className="flex-1 flex items-center justify-center relative bg-background rounded-b-lg overflow-hidden">
-          {error ? (
-             <div className="text-center text-destructive flex flex-col items-center gap-2">
-                <AlertTriangle className="h-8 w-8" />
-                <p>{error}</p>
+        <CardContent className="flex-1 flex items-center justify-center relative bg-background rounded-b-lg overflow-hidden p-0">
+          <canvas ref={canvasRef} className="w-full h-full cursor-move" />
+
+           {(error || !funcStr) && (
+             <div className="absolute inset-0 flex items-center justify-center bg-background/80 pointer-events-none">
+                <div className="text-center text-muted-foreground flex flex-col items-center gap-2 p-4 rounded-lg bg-background border">
+                  {error ? <AlertTriangle className="h-8 w-8 text-destructive" /> : <div className="h-8 w-8" />}
+                  {error ? <p className="text-destructive max-w-xs">{error}</p> : <p>Introduce una función para ver la gráfica.</p>}
+                </div>
              </div>
-          ) : !funcStr || chartData.length === 0 ? (
-             <div className="text-center text-muted-foreground">
-                <p>Introduce una función para ver la gráfica.</p>
-            </div>
-          ) : (
-            <ChartContainer config={{y: {label: "y"}, x: {label: "x"}}} className="w-full h-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
-                  <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="3 3" />
-                  <XAxis 
-                    dataKey="x" 
-                    type="number"
-                    domain={domain}
-                    axisLine={{stroke: "hsl(var(--foreground))", strokeWidth: 1}}
-                    tickLine={{stroke: "hsl(var(--foreground))"}}
-                    tick={{fill: "hsl(var(--muted-foreground))", fontSize: 12}}
-                    tickFormatter={(val) => val === 0 ? '' : val.toFixed(0)}
-                    label={{ value: 'x', position: 'right', offset: 10, fill: "hsl(var(--muted-foreground))" }}
-                    allowDataOverflow
-                  />
-                  <YAxis 
-                    type="number"
-                    domain={yDomain}
-                    axisLine={{stroke: "hsl(var(--foreground))", strokeWidth: 1}}
-                    tickLine={{stroke: "hsl(var(--foreground))"}}
-                    tick={{fill: "hsl(var(--muted-foreground))", fontSize: 12, dx: -5}}
-                    tickFormatter={(val) => val === 0 ? '' : val.toFixed(0)}
-                    label={{ value: 'y', position: 'top', offset: 10, fill: "hsl(var(--muted-foreground))" }}
-                    allowDataOverflow
-                  />
-                  <ChartTooltip
-                    cursor={{stroke: 'hsl(var(--primary))', strokeWidth: 1.5, strokeDasharray: "none"}}
-                    content={<ChartTooltipContent 
-                      indicator='line'
-                      labelFormatter={(label, payload) => payload?.[0] ? `x: ${payload[0].payload.x}` : label }
-                      formatter={(value, name) => [typeof value === 'number' ? value.toFixed(4) : 'N/A', 'f(x)']}
-                    />}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="y" 
-                    stroke="hsl(var(--primary))" 
-                    strokeWidth={2} 
-                    dot={false}
-                    connectNulls={false}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </ChartContainer>
           )}
         </CardContent>
       </Card>

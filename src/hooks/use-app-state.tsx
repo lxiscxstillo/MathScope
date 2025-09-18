@@ -5,13 +5,9 @@ import { useLocalStorage } from './use-local-storage';
 import debounce from 'lodash.debounce';
 import type { FunctionAnalysisOutput } from '@/ai/flows/function-analysis';
 
-const ZOOM_FACTOR = 0.8;
-const INITIAL_DOMAIN: [number, number] = [-5, 5];
-
 export type AppState = {
   func: string;
   guidedMode: boolean;
-  domain: [number, number];
   lastSaved: number | null;
   analysisResult: FunctionAnalysisOutput | null;
 };
@@ -20,16 +16,12 @@ type Action =
   | { type: 'SET_FUNCTION'; payload: string }
   | { type: 'SET_GUIDED_MODE'; payload: boolean }
   | { type: 'LOAD_STATE'; payload: AppState }
-  | { type: 'ZOOM_IN' }
-  | { type: 'ZOOM_OUT' }
-  | { type: 'RESET_ZOOM' }
   | { type: 'SET_ANALYSIS_RESULT', payload: FunctionAnalysisOutput | null };
 
 
 const initialState: AppState = {
-  func: 'sin(x^2)',
+  func: 'sin(x) / x',
   guidedMode: false,
-  domain: INITIAL_DOMAIN,
   lastSaved: null,
   analysisResult: null,
 };
@@ -37,24 +29,12 @@ const initialState: AppState = {
 function appStateReducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case 'SET_FUNCTION':
+      // Reset analysis when function changes
       return { ...state, func: action.payload, lastSaved: Date.now(), analysisResult: null };
     case 'SET_GUIDED_MODE':
       return { ...state, guidedMode: action.payload, lastSaved: Date.now() };
     case 'LOAD_STATE':
-        // Ensure domain is loaded, or reset to initial if not present
-      return { ...action.payload, domain: action.payload.domain || INITIAL_DOMAIN, analysisResult: null };
-    case 'ZOOM_IN': {
-      const newDomain: [number, number] = [state.domain[0] * ZOOM_FACTOR, state.domain[1] * ZOOM_FACTOR];
-      return { ...state, domain: newDomain };
-    }
-    case 'ZOOM_OUT': {
-       const newDomain: [number, number] = [state.domain[0] / ZOOM_FACTOR, state.domain[1] / ZOOM_FACTOR];
-       // Prevent domain from becoming too large
-       if (newDomain[1] - newDomain[0] > 1000) return state;
-       return { ...state, domain: newDomain };
-    }
-    case 'RESET_ZOOM':
-      return { ...state, domain: INITIAL_DOMAIN };
+      return { ...action.payload, analysisResult: null }; // Clear analysis on load
     case 'SET_ANALYSIS_RESULT':
       return { ...state, analysisResult: action.payload };
     default:
@@ -77,7 +57,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       if (appState.func) {
         setHistory(prevHistory => {
           // Do not save domain or analysis results in history
-          const { domain, analysisResult, ...stateToSave } = appState;
+          const { analysisResult, ...stateToSave } = appState;
           const newHistory = [
             stateToSave as AppState,
             ...prevHistory.filter(h => h.func !== appState.func),

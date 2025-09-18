@@ -1,6 +1,5 @@
 'use client';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { Cube } from '@/components/icons';
 import { PlayCircle, Download } from 'lucide-react';
 import { useAppState } from '@/hooks/use-app-state';
@@ -12,7 +11,8 @@ export function Header() {
   const { toast } = useToast();
 
   const handleDemoMode = () => {
-    const demoFunc = 'x^2 * exp(-x^2 - y^2)';
+    // A more interesting function for 1D analysis
+    const demoFunc = 'sin(x) / x';
     dispatch({ type: 'SET_FUNCTION', payload: demoFunc });
     dispatch({ type: 'SET_GUIDED_MODE', payload: true });
     
@@ -32,7 +32,7 @@ export function Header() {
       html2canvas(visualizationPanel, {
         allowTaint: true,
         useCORS: true,
-        backgroundColor: '#f0f4f8', // Un color de fondo similar al de la app
+        backgroundColor: '#ffffff', // Use a solid background color
       }).then(canvas => {
         const link = document.createElement('a');
         link.download = 'calculo.png';
@@ -72,7 +72,6 @@ export function Header() {
           <PlayCircle className="mr-2 h-4 w-4" />
           Cargar Ejemplo
         </Button>
-        <Separator orientation="vertical" className="h-6" />
         <Button variant="outline" size="sm" onClick={handleExport}>
           <Download className="mr-2 h-4 w-4" />
           Exportar
