@@ -33,6 +33,12 @@ export function FunctionInputSection() {
       func: state.func,
     },
   });
+  
+  // Sincroniza el valor del formulario si el estado global cambia (ej. Modo Demo)
+  useEffect(() => {
+    form.setValue('func', state.func);
+    validateFunction(state.func);
+  }, [state.func, form]);
 
   const validateFunction = (funcStr: string) => {
     if (!funcStr) {
@@ -40,7 +46,7 @@ export function FunctionInputSection() {
       return;
     }
     try {
-      math.parse(funcStr).compile().evaluate({ x: 1, y: 1, z: 1 });
+      math.parse(funcStr).compile().evaluate({ x: 1, y: 1 });
       setIsValid(true);
     } catch (error) {
       setIsValid(false);
@@ -53,20 +59,14 @@ export function FunctionInputSection() {
     const value = e.target.value;
     form.setValue('func', value);
     debouncedValidate(value);
-    dispatch({ type: 'SET_FUNCTION', payload: value });
   };
   
-  useEffect(() => {
-    validateFunction(state.func);
-  }, [state.func]);
-
   function onSubmit(data: z.infer<typeof FormSchema>) {
     dispatch({ type: 'SET_FUNCTION', payload: data.func });
     toast({
       title: 'Cálculo Iniciado',
       description: `Analizando y graficando la función: ${data.func}`,
     });
-    // En una implementación futura, aquí se iniciarían los cálculos del backend.
   }
 
   const toggleGuidedMode = (checked: boolean) => {
@@ -89,9 +89,9 @@ export function FunctionInputSection() {
               render={({ field }) => (
                 <FormItem>
                   <div className="flex justify-between items-center">
-                    <FormLabel>f(x, y, z) =</FormLabel>
+                    <FormLabel>f(x, y) =</FormLabel>
                     {isValid !== null && (
-                      <Badge variant={isValid ? 'default' : 'destructive'} className="bg-green-500 hover:bg-green-600 text-white">
+                      <Badge variant={isValid ? 'default' : 'destructive'} className={isValid ? "bg-green-500 hover:bg-green-600 text-white" : ""}>
                         {isValid ? 'Válida' : 'Inválida'}
                       </Badge>
                     )}
@@ -106,10 +106,11 @@ export function FunctionInputSection() {
 
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="item-1">
-                <AccordionTrigger>Dominio y Rango</AccordionTrigger>
+                <AccordionTrigger>Dominio y Rango (Estimado)</AccordionTrigger>
                 <AccordionContent className="font-code text-sm space-y-2">
-                  <p>Dominio: (-∞, ∞)</p>
-                  <p>Rango: [-1, 1]</p>
+                  <p>Dominio X: (-∞, ∞)</p>
+                  <p>Dominio Y: (-∞, ∞)</p>
+                  <p>Rango Z: [-1, 1]</p>
                   <p className="text-xs text-muted-foreground pt-2">Estimaciones basadas en análisis numérico.</p>
                 </AccordionContent>
               </AccordionItem>
@@ -130,7 +131,7 @@ export function FunctionInputSection() {
             
             {state.guidedMode && <GuidedSteps />}
 
-            <Button type="submit" className="w-full">Calcular y Graficar</Button>
+            <Button type="submit" className="w-full" disabled={!isValid}>Calcular y Graficar</Button>
           </form>
         </Form>
       </CardContent>

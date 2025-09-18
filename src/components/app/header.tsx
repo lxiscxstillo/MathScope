@@ -40,7 +40,7 @@ export function Header() {
       <div className="ml-auto flex items-center gap-2">
         <Button variant="outline" size="sm" onClick={handleDemoMode}>
           <PlayCircle className="mr-2 h-4 w-4" />
-          Modo Demo
+          Cargar Ejemplo
         </Button>
         <Separator orientation="vertical" className="h-6" />
         <Button variant="outline" size="sm" onClick={handleExport}>
