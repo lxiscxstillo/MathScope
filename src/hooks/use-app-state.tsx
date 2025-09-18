@@ -5,7 +5,7 @@ import { useLocalStorage } from './use-local-storage';
 import debounce from 'lodash.debounce';
 
 const ZOOM_FACTOR = 0.8;
-const INITIAL_DOMAIN: [number, number] = [-10, 10];
+const INITIAL_DOMAIN: [number, number] = [-5, 5];
 
 export type AppState = {
   func: string;
@@ -24,7 +24,7 @@ type Action =
 
 
 const initialState: AppState = {
-  func: 'sin(x^2 + y^2) / (x^2 + y^2)',
+  func: 'sin(x^2 + y^2) / (sqrt(x^2+y^2) + 0.1)',
   guidedMode: false,
   domain: INITIAL_DOMAIN,
   lastSaved: null,
