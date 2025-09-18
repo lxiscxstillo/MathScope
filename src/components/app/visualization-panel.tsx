@@ -33,6 +33,7 @@ export function VisualizationPanel() {
       const node = math.parse(funcStr);
       const code = node.compile();
       const [min, max] = domain;
+      if (min === max) return { data: [], error: null, yDomain: [-5, 5]};
       const step = (max - min) / (CHART_POINTS - 1);
       const data = [];
       let maxAbsY = 0;
@@ -42,7 +43,7 @@ export function VisualizationPanel() {
         let y = null;
         try {
            y = code.evaluate({ x });
-           if (!isFinite(y)) {
+           if (!isFinite(y) || Math.abs(y) > 1e6) { // Limit extreme values
              y = null;
            } else {
              maxAbsY = Math.max(maxAbsY, Math.abs(y));
@@ -50,11 +51,11 @@ export function VisualizationPanel() {
         } catch (e) {
           // Si un punto falla, lo omitimos
         }
-        data.push({ x: x.toFixed(3), y });
+        data.push({ x: Number(x.toFixed(4)), y });
       }
-
-      // Si no se calculan puntos válidos, usamos un dominio por defecto
-      const finalYDomain: [number, number] = maxAbsY > 0 ? [-maxAbsY, maxAbsY] : [-5, 5];
+      
+      const yRange = maxAbsY === 0 ? 5 : maxAbsY * 1.2;
+      const finalYDomain: [number, number] = [-yRange, yRange];
 
       return { data, error: null, yDomain: finalYDomain };
     } catch (error) {
@@ -104,35 +105,44 @@ export function VisualizationPanel() {
           ) : (
             <ChartContainer config={{y: {label: "y"}, x: {label: "x"}}} className="w-full h-full">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <LineChart data={chartData} margin={{ top: 20, right: 20, left: 20, bottom: 20 }}>
+                  <CartesianGrid stroke="hsl(var(--border))" />
                   <XAxis 
                     dataKey="x" 
                     type="number"
-                    domain={['dataMin', 'dataMax']}
-                    tickFormatter={(val) => parseFloat(val).toFixed(1)}
-                    label={{ value: 'x', position: 'insideBottomRight', offset: -10 }}
+                    domain={domain}
+                    tickLine={true}
+                    axisLine={{stroke: "hsl(var(--foreground))", strokeWidth: 1}}
+                    tick={{fill: "hsl(var(--muted-foreground))", fontSize: 12}}
+                    tickFormatter={(val) => val === 0 ? '' : parseFloat(val).toFixed(0)}
+                    label={{ value: 'x', position: 'insideBottomRight', offset: -10, fill: "hsl(var(--muted-foreground))" }}
                     stroke="hsl(var(--foreground))"
-                    tickCount={10}
+                    tickCount={11}
+                    allowDataOverflow
                   />
                   <YAxis 
+                    type="number"
                     domain={yDomain}
-                    label={{ value: 'y', angle: -90, position: 'insideLeft' }}
+                    tickLine={true}
+                    axisLine={{stroke: "hsl(var(--foreground))", strokeWidth: 1}}
+                    tick={{fill: "hsl(var(--muted-foreground))", fontSize: 12}}
+                    tickFormatter={(val) => val === 0 ? '0' : parseFloat(val).toFixed(0)}
+                    label={{ value: 'y', angle: -90, position: 'insideLeft', fill: "hsl(var(--muted-foreground))" }}
                     stroke="hsl(var(--foreground))"
-                    allowDataOverflow={true}
+                    allowDataOverflow
                   />
                   <ChartTooltip
-                    cursor={{stroke: 'hsl(var(--primary))', strokeWidth: 1.5, strokeDasharray: "5 5"}}
+                    cursor={{stroke: 'hsl(var(--muted-foreground))', strokeWidth: 1, strokeDasharray: "3 3"}}
                     content={<ChartTooltipContent 
                       labelFormatter={(label, payload) => payload?.[0] ? `x: ${payload[0].payload.x}` : label }
-                      formatter={(value) => typeof value === 'number' ? value.toFixed(3) : 'N/A'}
+                      formatter={(value) => typeof value === 'number' ? value.toFixed(4) : 'N/A'}
                     />}
                   />
                   <Line 
                     type="monotone" 
                     dataKey="y" 
                     stroke="hsl(var(--primary))" 
-                    strokeWidth={2} 
+                    strokeWidth={2.5} 
                     dot={false}
                     connectNulls={false}
                   />
