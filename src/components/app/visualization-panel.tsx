@@ -12,7 +12,6 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
   ResponsiveContainer,
   ReferenceLine,
 } from 'recharts';
@@ -28,33 +27,39 @@ export function VisualizationPanel() {
   const { state, dispatch } = useAppState();
   const { func: funcStr, domain } = state;
 
-  const chartData = useMemo(() => {
-    if (!funcStr) return { data: [], error: null };
+  const { data: chartData, error, yDomain } = useMemo(() => {
+    if (!funcStr) return { data: [], error: null, yDomain: [-5, 5] };
     try {
       const node = math.parse(funcStr);
       const code = node.compile();
       const [min, max] = domain;
       const step = (max - min) / (CHART_POINTS - 1);
       const data = [];
+      let maxAbsY = 0;
 
       for (let i = 0; i < CHART_POINTS; i++) {
         const x = min + i * step;
         let y = null;
         try {
            y = code.evaluate({ x });
-           // Evitar valores infinitos o no numéricos que rompen la gráfica
            if (!isFinite(y)) {
              y = null;
+           } else {
+             maxAbsY = Math.max(maxAbsY, Math.abs(y));
            }
         } catch (e) {
-          // Si un punto falla (ej. log(-1)), lo omitimos para no romper la gráfica
+          // Si un punto falla, lo omitimos
         }
         data.push({ x: x.toFixed(3), y });
       }
-      return { data, error: null };
+
+      // Si no se calculan puntos válidos, usamos un dominio por defecto
+      const finalYDomain: [number, number] = maxAbsY > 0 ? [-maxAbsY, maxAbsY] : [-5, 5];
+
+      return { data, error: null, yDomain: finalYDomain };
     } catch (error) {
       console.error("Error parsing or evaluating function:", error);
-      return { data: [], error: "No se pudo evaluar la función. Revisa la sintaxis." };
+      return { data: [], error: "No se pudo evaluar la función. Revisa la sintaxis.", yDomain: [-5, 5] };
     }
   }, [funcStr, domain]);
 
@@ -87,19 +92,19 @@ export function VisualizationPanel() {
           </div>
         </CardHeader>
         <CardContent className="flex-1 flex items-center justify-center relative bg-background rounded-b-lg overflow-hidden">
-          {chartData.error ? (
+          {error ? (
              <div className="text-center text-destructive flex flex-col items-center gap-2">
                 <AlertTriangle className="h-8 w-8" />
-                <p>{chartData.error}</p>
+                <p>{error}</p>
              </div>
-          ) : !funcStr || chartData.data.length === 0 ? (
+          ) : !funcStr || chartData.length === 0 ? (
              <div className="text-center text-muted-foreground">
                 <p>Introduce una función para ver la gráfica.</p>
             </div>
           ) : (
             <ChartContainer config={{y: {label: "y"}, x: {label: "x"}}} className="w-full h-full">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData.data} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis 
                     dataKey="x" 
@@ -111,9 +116,10 @@ export function VisualizationPanel() {
                     tickCount={10}
                   />
                   <YAxis 
-                    domain={['auto', 'auto']}
+                    domain={yDomain}
                     label={{ value: 'y', angle: -90, position: 'insideLeft' }}
                     stroke="hsl(var(--foreground))"
+                    allowDataOverflow={true}
                   />
                   <ChartTooltip
                     cursor={{stroke: 'hsl(var(--primary))', strokeWidth: 1.5, strokeDasharray: "5 5"}}
@@ -130,7 +136,7 @@ export function VisualizationPanel() {
                     stroke="hsl(var(--primary))" 
                     strokeWidth={2} 
                     dot={false}
-                    connectNulls={false} // No conectar puntos donde la función no está definida
+                    connectNulls={false}
                   />
                 </LineChart>
               </ResponsiveContainer>
