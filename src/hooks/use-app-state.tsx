@@ -2,6 +2,7 @@
 
 import React, { createContext, useReducer, useContext, useEffect } from 'react';
 import { useLocalStorage } from './use-local-storage';
+import debounce from 'lodash.debounce';
 
 export type AppState = {
   func: string;
@@ -12,8 +13,7 @@ export type AppState = {
 type Action =
   | { type: 'SET_FUNCTION'; payload: string }
   | { type: 'SET_GUIDED_MODE'; payload: boolean }
-  | { type: 'LOAD_STATE'; payload: AppState }
-  | { type: 'SAVE_TO_HISTORY' };
+  | { type: 'LOAD_STATE'; payload: AppState };
 
 const initialState: AppState = {
   func: 'sin(x^2 + y^2) / (x^2 + y^2)',
@@ -29,8 +29,6 @@ function appStateReducer(state: AppState, action: Action): AppState {
       return { ...state, guidedMode: action.payload };
     case 'LOAD_STATE':
       return { ...action.payload };
-    case 'SAVE_TO_HISTORY':
-        return { ...state, lastSaved: Date.now() };
     default:
       return state;
   }
@@ -47,27 +45,25 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
   // Effect to auto-save to history on change
   useEffect(() => {
-    const handler = setTimeout(() => {
-        if (state.func) {
-            dispatch({ type: 'SAVE_TO_HISTORY' });
-        }
-    }, 1000); // Debounce saving
+    const saveToHistory = debounce(() => {
+      if (state.func) {
+        const currentState = { ...state, lastSaved: Date.now() };
+        setHistory(prevHistory => {
+          const newHistory = [
+            currentState,
+            ...prevHistory.filter(h => h.func !== currentState.func),
+          ];
+          return newHistory.slice(0, 10); // Keep only the last 10 entries
+        });
+      }
+    }, 1000);
+
+    saveToHistory();
 
     return () => {
-        clearTimeout(handler);
+      saveToHistory.cancel();
     };
-  }, [state.func, state.guidedMode]);
-
-  useEffect(() => {
-    if (state.lastSaved) {
-        const currentState = {...state};
-        setHistory(prevHistory => {
-            const newHistory = [currentState, ...prevHistory.filter(h => h.func !== currentState.func)];
-            return newHistory.slice(0, 10); // Keep only the last 10 entries
-        });
-    }
-  }, [state.lastSaved, setHistory]);
-
+  }, [state.func, state.guidedMode, state, setHistory]);
 
   return (
     <AppStateContext.Provider value={{ state, dispatch }}>
