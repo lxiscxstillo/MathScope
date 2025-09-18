@@ -1,150 +1,25 @@
 'use client';
 
-import React, { useMemo, useRef, Suspense, useEffect } from 'react';
-import * as math from 'mathjs';
-import { Canvas, useThree } from '@react-three/fiber';
-import { OrbitControls, Text } from '@react-three/drei';
-import * as THREE from 'three';
+import React from 'react';
+import Image from 'next/image';
 import { useAppState } from '@/hooks/use-app-state';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ZoomIn, ZoomOut, RotateCcw, Frown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-
-const GRID_SIZE = 50;
-
-// Componente para la superficie de la función
-function Surface({ func, domain }: { func: (x: number, y: number) => number; domain: [number, number] }) {
-  const mesh = useRef<THREE.Mesh>(null!);
-  const geometry = useMemo(() => {
-    const [min, max] = domain;
-    const size = max - min;
-    const geometry = new THREE.PlaneGeometry(size, size, GRID_SIZE, GRID_SIZE);
-    const positions = geometry.attributes.position.array as number[];
-
-    for (let i = 0; i < positions.length; i += 3) {
-      const x = positions[i] + (min + max) / 2;
-      const y = positions[i + 1] + (min + max) / 2;
-      try {
-        const z = func(x, y);
-        if (isFinite(z)) {
-          positions[i + 2] = z;
-        } else {
-            positions[i+2] = 0; // O un valor neutro
-        }
-      } catch (e) {
-        positions[i + 2] = 0; // O un valor neutro si la función falla
-      }
-    }
-    
-    geometry.computeVertexNormals();
-    geometry.attributes.position.needsUpdate = true;
-    
-    // Asignar colores basados en la altura (Z)
-    const colors: number[] = [];
-    const positionsAttribute = geometry.attributes.position;
-    let minZ = Infinity;
-    let maxZ = -Infinity;
-
-    for (let i = 0; i < positionsAttribute.count; i++) {
-        const z = positionsAttribute.getZ(i);
-        if (isFinite(z)) {
-            if (z < minZ) minZ = z;
-            if (z > maxZ) maxZ = z;
-        }
-    }
-
-    if (!isFinite(minZ)) minZ = -1;
-    if (!isFinite(maxZ)) maxZ = 1;
-    if (minZ === maxZ) {
-        minZ -= 1;
-        maxZ += 1;
-    }
-
-    const color = new THREE.Color();
-    const blue = new THREE.Color(0x1e40af); // Azul oscuro
-    const red = new THREE.Color(0xbe123c); // Rojo
-    const green = new THREE.Color(0x16a34a); // Verde
-    
-    const lowColor = blue;
-    const midColor = green;
-    const highColor = red;
-
-    for (let i = 0; i < positionsAttribute.count; i++) {
-        const z = positionsAttribute.getZ(i);
-        const alpha = !isFinite(z) ? 0.5 : (z - minZ) / (maxZ - minZ);
-        
-        if (alpha < 0.5) {
-            color.lerpColors(lowColor, midColor, alpha * 2);
-        } else {
-            color.lerpColors(midColor, highColor, (alpha - 0.5) * 2);
-        }
-        
-        colors.push(color.r, color.g, color.b);
-    }
-
-    geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-    
-    return geometry;
-  }, [func, domain]);
-
-  return (
-    <mesh ref={mesh} geometry={geometry}>
-      <meshStandardMaterial vertexColors side={THREE.DoubleSide} />
-    </mesh>
-  );
-}
-
-// Componente para los ejes y la grilla
-function AxesHelper({ domain }: { domain: [number, number] }) {
-  const { scene } = useThree();
-  const max = Math.max(Math.abs(domain[0]), Math.abs(domain[1]));
-  const size = max * 1.2;
-
-  useEffect(() => {
-    const axes = new THREE.AxesHelper(size);
-    (axes.material as THREE.Material).depthTest = false;
-    axes.renderOrder = 1;
-    scene.add(axes);
-
-    const grid = new THREE.GridHelper(size * 2, 20);
-    grid.position.y = -0.01;
-    scene.add(grid);
-
-    return () => {
-      scene.remove(axes);
-      scene.remove(grid);
-    };
-  }, [scene, size]);
-
-  return (
-    <>
-      <Text position={[size, 0, 0]} fontSize={size / 20} color="red">X</Text>
-      <Text position={[0, size, 0]} fontSize={size / 20} color="green">Z</Text>
-      <Text position={[0, 0, size]} fontSize={size / 20} color="blue">Y</Text>
-    </>
-  );
-}
-
+import { ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 export function VisualizationPanel() {
-  const { state, dispatch } = useAppState();
-  const { func: funcStr, domain } = state;
+  const { state } = useAppState();
+  const { func: funcStr } = state;
+  const { toast } = useToast();
 
-  const [func, error] = useMemo(() => {
-    try {
-      if (!funcStr) return [null, null];
-      const compiled = math.parse(funcStr).compile();
-      return [(x: number, y: number) => compiled.evaluate({ x, y }), null];
-    } catch (e: any) {
-      return [null, e.message || 'Función inválida'];
-    }
-  }, [funcStr]);
-
-  const handleZoomIn = () => dispatch({ type: 'ZOOM_IN' });
-  const handleZoomOut = () => dispatch({ type: 'ZOOM_OUT' });
-  const handleResetZoom = () => dispatch({ type: 'RESET_ZOOM' });
+  const handleNotImplemented = () => {
+    toast({
+      title: 'Función no implementada',
+      description: 'La visualización 3D interactiva está temporalmente deshabilitada.',
+      variant: 'destructive',
+    });
+  };
 
   return (
     <div className="flex-1 flex flex-col p-4 bg-muted/30">
@@ -158,41 +33,37 @@ export function VisualizationPanel() {
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon" onClick={handleZoomIn} title="Acercar">
+              <Button variant="outline" size="icon" onClick={handleNotImplemented} title="Acercar">
                 <ZoomIn className="h-4 w-4" />
               </Button>
-              <Button variant="outline" size="icon" onClick={handleZoomOut} title="Alejar">
+              <Button variant="outline" size="icon" onClick={handleNotImplemented} title="Alejar">
                 <ZoomOut className="h-4 w-4" />
               </Button>
-              <Button variant="outline" size="icon" onClick={handleResetZoom} title="Restablecer Vista">
+              <Button variant="outline" size="icon" onClick={handleNotImplemented} title="Restablecer Vista">
                 <RotateCcw className="h-4 w-4" />
               </Button>
             </div>
           </div>
         </CardHeader>
         <CardContent className="flex-1 flex items-center justify-center relative bg-background rounded-b-lg overflow-hidden">
-          <Suspense fallback={<Skeleton className="h-full w-full" />}>
-            {error ? (
-              <Alert variant="destructive" className="max-w-md">
-                <Frown className="h-4 w-4" />
-                <AlertTitle>Error en la función</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            ) : func ? (
-              <Canvas camera={{ position: [domain[1] * 1.5, domain[1] * 1.5, domain[1] * 1.5], fov: 50 }}>
-                <ambientLight intensity={0.8} />
-                <pointLight position={[10, 10, 10]} intensity={1.5} />
-                <Surface func={func} domain={domain} />
-                <AxesHelper domain={domain} />
-                <OrbitControls />
-              </Canvas>
-            ) : (
-             <div className="z-10 text-center text-muted-foreground p-4">
-                <p className="text-lg font-medium">Gráfico 3D</p>
-                <p className="text-sm mt-2">Introduce una función para ver su gráfica</p>
-             </div>
-            )}
-          </Suspense>
+          <div className="relative w-full h-full">
+            <Image
+              src="https://picsum.photos/seed/graph3d/1200/800"
+              alt="Visualización 3D de una función matemática"
+              fill
+              className="object-cover"
+              data-ai-hint="3d graph"
+              priority
+            />
+            <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+              <div className="text-center p-4 bg-black/50 rounded-lg">
+                <h3 className="text-white font-bold text-lg">Visualización Interactiva Deshabilitada</h3>
+                <p className="text-slate-300 text-sm mt-1">
+                  Se muestra una imagen estática para evitar errores.
+                </p>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
