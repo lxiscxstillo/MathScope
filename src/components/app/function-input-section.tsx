@@ -60,7 +60,7 @@ export function FunctionInputSection() {
       return;
     }
     try {
-      math.parse(funcStr).compile().evaluate({ x: 1, y: 1 });
+      math.parse(funcStr).compile().evaluate({ x: 1 });
       setIsValid(true);
     } catch (error) {
       setIsValid(false);
@@ -109,8 +109,8 @@ export function FunctionInputSection() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Análisis de Función 2D</CardTitle>
-        <CardDescription>Introduce una función f(x, y) para visualizar y analizar.</CardDescription>
+        <CardTitle>Análisis de Función 1D</CardTitle>
+        <CardDescription>Introduce una función f(x) para visualizar y analizar.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -121,7 +121,7 @@ export function FunctionInputSection() {
               render={({ field }) => (
                 <FormItem>
                   <div className="flex justify-between items-center">
-                    <FormLabel>f(x, y) =</FormLabel>
+                    <FormLabel>f(x) =</FormLabel>
                     {isValid !== null && (
                       <Badge variant={isValid ? 'default' : 'destructive'} className={isValid ? "bg-green-500 hover:bg-green-600 text-white" : ""}>
                         {isValid ? 'Válida' : 'Inválida'}
@@ -129,7 +129,7 @@ export function FunctionInputSection() {
                     )}
                   </div>
                   <FormControl>
-                    <Input placeholder="Ej: sin(x) * cos(y)" {...field} onChange={handleFunctionChange} className="font-code" />
+                    <Input placeholder="Ej: sin(x^2)" {...field} onChange={handleFunctionChange} className="font-code" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -147,9 +147,8 @@ export function FunctionInputSection() {
                     </>
                   ) : analysisResult ? (
                     <>
-                      <p>Dominio X: {analysisResult.domain.x}</p>
-                      <p>Dominio Y: {analysisResult.domain.y}</p>
-                      <p>Rango Z: {analysisResult.range}</p>
+                      <p>Dominio X: {analysisResult.domain}</p>
+                      <p>Rango Y: {analysisResult.range}</p>
                     </>
                   ) : (
                      <p className="text-xs text-muted-foreground">Calcula para ver los resultados.</p>
@@ -157,19 +156,17 @@ export function FunctionInputSection() {
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-2">
-                <AccordionTrigger>Derivadas Parciales y Gradiente</AccordionTrigger>
+                <AccordionTrigger>Derivadas</AccordionTrigger>
                 <AccordionContent className="text-sm space-y-3">
                    {isPending ? (
                     <>
                       <Skeleton className="h-6 w-full" />
                       <Skeleton className="h-6 w-full" />
-                      <Skeleton className="h-6 w-full" />
                     </>
                   ) : analysisResult ? (
                     <div className="font-code space-y-3">
-                      <p className='flex items-center gap-2'><span>∂f/∂x =</span> <InlineMath math={analysisResult.partialDerivativeX} /></p>
-                      <p className='flex items-center gap-2'><span>∂f/∂y =</span> <InlineMath math={analysisResult.partialDerivativeY} /></p>
-                      <p className='flex items-center gap-2'><span>∇f =</span> <InlineMath math={analysisResult.gradient} /></p>
+                      <p className='flex items-center gap-2'><span>f'(x) =</span> <InlineMath math={analysisResult.firstDerivative} /></p>
+                      <p className='flex items-center gap-2'><span>f''(x) =</span> <InlineMath math={analysisResult.secondDerivative} /></p>
                     </div>
                   ) : (
                      <p className="text-xs text-muted-foreground">Calcula para ver los resultados.</p>

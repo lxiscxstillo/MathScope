@@ -16,7 +16,7 @@ export function VisualizationPanel() {
   const handleNotImplemented = () => {
     toast({
       title: 'Función no implementada',
-      description: 'La visualización 3D interactiva está temporalmente deshabilitada.',
+      description: 'La visualización interactiva está temporalmente deshabilitada.',
       variant: 'destructive',
     });
   };
@@ -27,7 +27,7 @@ export function VisualizationPanel() {
         <CardHeader>
           <div className="flex justify-between items-start">
             <div>
-              <CardTitle>Visualización 3D</CardTitle>
+              <CardTitle>Visualización 2D</CardTitle>
               <CardDescription className="font-code text-primary pt-1">
                 {funcStr || 'Ninguna función definida'}
               </CardDescription>
@@ -48,11 +48,11 @@ export function VisualizationPanel() {
         <CardContent className="flex-1 flex items-center justify-center relative bg-background rounded-b-lg overflow-hidden">
           <div className="relative w-full h-full">
             <Image
-              src="https://picsum.photos/seed/graph3d/1200/800"
-              alt="Visualización 3D de una función matemática"
+              src="https://picsum.photos/seed/graph2d/1200/800"
+              alt="Visualización 2D de una función matemática"
               fill
               className="object-cover"
-              data-ai-hint="3d graph"
+              data-ai-hint="2d graph"
               priority
             />
             <div className="absolute inset-0 bg-black/30 flex items-center justify-center">

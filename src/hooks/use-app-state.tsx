@@ -27,7 +27,7 @@ type Action =
 
 
 const initialState: AppState = {
-  func: 'sin(x^2 + y^2) / (sqrt(x^2+y^2) + 0.1)',
+  func: 'sin(x^2)',
   guidedMode: false,
   domain: INITIAL_DOMAIN,
   lastSaved: null,
