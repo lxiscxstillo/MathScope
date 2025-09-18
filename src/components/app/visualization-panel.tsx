@@ -159,24 +159,30 @@ const drawFunction = (ctx: CanvasRenderingContext2D, func: math.EvalFunction, xS
     ctx.strokeStyle = 'hsl(var(--primary))';
     ctx.lineWidth = 2;
     
+    let firstPoint = true;
     for (let i = 0; i <= width; i++) {
         const x = xScale.invert(i);
         try {
             const y = func.evaluate({ x });
-             if (!isFinite(y)) {
-                ctx.stroke(); // End current path
-                ctx.beginPath(); // Start a new one
+             if (!isFinite(y) || isNaN(y)) {
+                ctx.stroke(); 
+                firstPoint = true;
                 continue;
             }
             const yPos = yScale(y);
 
-            if (i === 0) {
+            if (firstPoint) {
                 ctx.moveTo(i, yPos);
+                firstPoint = false;
             } else {
                 ctx.lineTo(i, yPos);
             }
         } catch (e) {
             // function might be undefined at this point, just skip
+            if (!firstPoint) {
+              ctx.stroke();
+              firstPoint = true;
+            }
         }
     }
     ctx.stroke();
