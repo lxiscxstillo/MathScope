@@ -1,106 +1,30 @@
 'use client';
-import React, { useMemo, useRef, Suspense } from 'react';
-import * as math from 'mathjs';
-import { Canvas, useThree } from '@react-three/fiber';
-import { OrbitControls, Text } from '@react-three/drei';
-import * as THREE from 'three';
+import React, { useMemo } from 'react';
+import Image from 'next/image';
 
 import { useAppState } from '@/hooks/use-app-state';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Frown, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-
-const FunctionSurface = ({ func, domain }: { func: (x: number, y: number) => number; domain: [number, number] }) => {
-  const geometry = useMemo(() => {
-    const size = 100; // Resolution of the grid
-    const [min, max] = domain;
-    const range = max - min;
-    const step = range / size;
-    const points = [];
-
-    for (let i = 0; i <= size; i++) {
-      const x = min + i * step;
-      for (let j = 0; j <= size; j++) {
-        const y = min + j * step;
-        let z = func(x, y);
-
-        // Clamp z value to prevent extreme peaks and visual artifacts
-        z = Math.max(-10, Math.min(10, z));
-
-        if (isNaN(z) || !isFinite(z)) {
-          z = 0; // Default to 0 for invalid calculations
-        }
-        points.push(new THREE.Vector3(x, z, -y)); // Match coordinate system (Y-up)
-      }
-    }
-
-    const geom = new THREE.BufferGeometry().setFromPoints(points);
-    const indices = [];
-    for (let i = 0; i < size; i++) {
-      for (let j = 0; j < size; j++) {
-        const a = i * (size + 1) + j;
-        const b = a + (size + 1);
-        const c = a + 1;
-        const d = b + 1;
-        indices.push(a, b, c);
-        indices.push(b, d, c);
-      }
-    }
-    geom.setIndex(indices);
-    geom.computeVertexNormals();
-    return geom;
-  }, [func, domain]);
-
-  return (
-    <mesh geometry={geometry}>
-      <meshStandardMaterial
-        color="hsl(var(--primary))"
-        side={THREE.DoubleSide}
-        wireframe={false}
-      />
-    </mesh>
-  );
-};
-
-const Axes = ({ size = 10 }) => (
-  <>
-    {/* X axis (Red) */}
-    <arrowHelper args={[new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 0, 0), size, 0xff0000]} />
-    <Text color="red" position={[size + 0.5, 0, 0]} fontSize={0.5}>X</Text>
-    {/* Y axis (Green) - Represents Z in math */}
-    <arrowHelper args={[new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 0), size, 0x00ff00]} />
-    <Text color="green" position={[0, size + 0.5, 0]} fontSize={0.5}>Z</Text>
-    {/* Z axis (Blue) - Represents Y in math */}
-    <arrowHelper args={[new THREE.Vector3(0, 0, -1), new THREE.Vector3(0, 0, 0), size, 0x0000ff]} />
-    <Text color="blue" position={[0, 0, -size - 0.5]} fontSize={0.5}>Y</Text>
-  </>
-);
-
-const Grid = ({ size = 20, divisions = 20 }) => (
-    <gridHelper args={[size, divisions]} rotation-x={Math.PI / 2} />
-);
 
 export function VisualizationPanel() {
   const { state, dispatch } = useAppState();
-  const { func: funcStr, domain } = state;
+  const { func: funcStr } = state;
 
-  const handleZoomIn = () => dispatch({ type: 'ZOOM_IN' });
-  const handleZoomOut = () => dispatch({ type: 'ZOOM_OUT' });
-  const handleResetZoom = () => dispatch({ type: 'RESET_ZOOM' });
+  const handleZoomIn = () => {};
+  const handleZoomOut = () => {};
+  const handleResetZoom = () => {};
 
-  const { func, error } = useMemo(() => {
-    if (!funcStr) return { func: () => 0, error: null };
+  const { error } = useMemo(() => {
+    if (!funcStr) return { error: null };
+    // Basic validation placeholder
     try {
-      const node = math.parse(funcStr);
-      const code = node.compile();
-      const func = (x: number, y: number) => code.evaluate({ x, y });
-      // Test with a sample point
-      func(1, 1);
-      return { func, error: null };
+      // A very simple check
+      if (funcStr.includes('**')) throw new Error("Usa '^' para potencias en lugar de '**'.");
+      return { error: null };
     } catch (e: any) {
-      return { func: () => 0, error: `Función inválida: ${e.message}` };
+      return { error: `Función inválida: ${e.message}` };
     }
   }, [funcStr]);
 
@@ -146,16 +70,13 @@ export function VisualizationPanel() {
           )}
           
           {funcStr && !error && (
-             <Suspense fallback={<Skeleton className="w-full h-full" />}>
-              <Canvas camera={{ position: [15, 12, 15], fov: 50 }}>
-                <ambientLight intensity={0.8} />
-                <pointLight position={[10, 15, 10]} intensity={1} />
-                <FunctionSurface func={func} domain={domain} />
-                <Axes size={domain[1]}/>
-                <Grid size={domain[1] * 2} divisions={domain[1] * 2} />
-                <OrbitControls enableDamping dampingFactor={0.1} rotateSpeed={0.5} />
-              </Canvas>
-            </Suspense>
+            <Image
+              src="https://picsum.photos/seed/graph/800/600"
+              alt="Marcador de posición para gráfico 3D"
+              fill
+              className="object-cover"
+              data-ai-hint="3d math graph"
+            />
           )}
         </CardContent>
       </Card>
