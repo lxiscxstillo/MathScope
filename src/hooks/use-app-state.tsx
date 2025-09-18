@@ -5,7 +5,7 @@ import { useLocalStorage } from './use-local-storage';
 import debounce from 'lodash.debounce';
 
 const ZOOM_FACTOR = 0.8;
-const INITIAL_DOMAIN: [number, number] = [-5, 5];
+const INITIAL_DOMAIN: [number, number] = [-10, 10];
 
 export type AppState = {
   func: string;
@@ -45,6 +45,8 @@ function appStateReducer(state: AppState, action: Action): AppState {
     }
     case 'ZOOM_OUT': {
        const newDomain: [number, number] = [state.domain[0] / ZOOM_FACTOR, state.domain[1] / ZOOM_FACTOR];
+       // Prevent domain from becoming too large
+       if (newDomain[1] - newDomain[0] > 1000) return state;
        return { ...state, domain: newDomain };
     }
     case 'RESET_ZOOM':
@@ -68,7 +70,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     debounce((appState: AppState) => {
       if (appState.func) {
         setHistory(prevHistory => {
-          // Remove domain from saved history to avoid issues with older versions
+          // Do not save domain in history
           const { domain, ...stateToSave } = appState;
           const newHistory = [
             stateToSave as AppState,
@@ -88,7 +90,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     return () => {
       debouncedSave.cancel();
     };
-  }, [state.func, state.guidedMode, debouncedSave, state]);
+  }, [state.func, state.guidedMode, debouncedSave, state.lastSaved]);
 
 
   return (
