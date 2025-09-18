@@ -49,8 +49,17 @@ function Surface({ func, domain }: { func: (x: number, y: number) => number; dom
 
     for (let i = 0; i < positionsAttribute.count; i++) {
         const z = positionsAttribute.getZ(i);
-        if (z < minZ) minZ = z;
-        if (z > maxZ) maxZ = z;
+        if (isFinite(z)) {
+            if (z < minZ) minZ = z;
+            if (z > maxZ) maxZ = z;
+        }
+    }
+
+    if (!isFinite(minZ)) minZ = -1;
+    if (!isFinite(maxZ)) maxZ = 1;
+    if (minZ === maxZ) {
+        minZ -= 1;
+        maxZ += 1;
     }
 
     const color = new THREE.Color();
@@ -64,7 +73,7 @@ function Surface({ func, domain }: { func: (x: number, y: number) => number; dom
 
     for (let i = 0; i < positionsAttribute.count; i++) {
         const z = positionsAttribute.getZ(i);
-        const alpha = (z - minZ) / (maxZ - minZ);
+        const alpha = !isFinite(z) ? 0.5 : (z - minZ) / (maxZ - minZ);
         
         if (alpha < 0.5) {
             color.lerpColors(lowColor, midColor, alpha * 2);
