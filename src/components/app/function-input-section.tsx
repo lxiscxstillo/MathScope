@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -17,6 +17,9 @@ import { Label } from '@/components/ui/label';
 import { GuidedSteps } from './guided-steps';
 import { useAppState } from '@/hooks/use-app-state';
 import { useToast } from '@/hooks/use-toast';
+import { analyzeFunction, FunctionAnalysisOutput } from '@/ai/flows/function-analysis';
+import { Skeleton } from '../ui/skeleton';
+import { BlockMath, InlineMath } from 'react-katex';
 
 const FormSchema = z.object({
   func: z.string().min(1, 'La función es obligatoria.'),
@@ -25,6 +28,10 @@ const FormSchema = z.object({
 export function FunctionInputSection() {
   const { state, dispatch } = useAppState();
   const [isValid, setIsValid] = useState<boolean | null>(null);
+  const [isPending, startTransition] = useTransition();
+  const [analysisResult, setAnalysisResult] = useState<FunctionAnalysisOutput | null>(null);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -34,12 +41,19 @@ export function FunctionInputSection() {
     },
   });
   
-  // Sincroniza el valor del formulario si el estado global cambia (ej. Modo Demo)
   useEffect(() => {
     form.setValue('func', state.func);
     validateFunction(state.func);
-  }, [state.func, form]);
+    // Cuando la función cambia (ej. modo demo), limpiamos los resultados anteriores y recalculamos.
+    setAnalysisResult(null);
+    setAnalysisError(null);
+    if(state.func) {
+      onSubmit({func: state.func});
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.func]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const validateFunction = (funcStr: string) => {
     if (!funcStr) {
       setIsValid(null);
@@ -64,8 +78,26 @@ export function FunctionInputSection() {
   function onSubmit(data: z.infer<typeof FormSchema>) {
     dispatch({ type: 'SET_FUNCTION', payload: data.func });
     toast({
-      title: 'Cálculo Iniciado',
-      description: `Analizando y graficando la función: ${data.func}`,
+      title: 'Análisis Iniciado',
+      description: `Analizando la función: ${data.func}`,
+    });
+
+    startTransition(async () => {
+      setAnalysisResult(null);
+      setAnalysisError(null);
+      try {
+        const result = await analyzeFunction({ func: data.func });
+        setAnalysisResult(result);
+        dispatch({ type: 'SET_ANALYSIS_RESULT', payload: result });
+      } catch (error) {
+        console.error(error);
+        setAnalysisError('No se pudo analizar la función. Revisa la sintaxis.');
+        toast({
+          variant: 'destructive',
+          title: 'Error de Análisis',
+          description: 'La IA no pudo procesar la función.',
+        });
+      }
     });
   }
 
@@ -77,8 +109,8 @@ export function FunctionInputSection() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Análisis de Función</CardTitle>
-        <CardDescription>Introduce una función para visualizar y analizar.</CardDescription>
+        <CardTitle>Análisis de Función 2D</CardTitle>
+        <CardDescription>Introduce una función f(x, y) para visualizar y analizar.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -104,22 +136,44 @@ export function FunctionInputSection() {
               )}
             />
 
-            <Accordion type="single" collapsible className="w-full">
+            <Accordion type="single" collapsible className="w-full" defaultValue="item-1">
               <AccordionItem value="item-1">
                 <AccordionTrigger>Dominio y Rango (Estimado)</AccordionTrigger>
                 <AccordionContent className="font-code text-sm space-y-2">
-                  <p>Dominio X: (-∞, ∞)</p>
-                  <p>Dominio Y: (-∞, ∞)</p>
-                  <p>Rango Z: [-1, 1]</p>
-                  <p className="text-xs text-muted-foreground pt-2">Estimaciones basadas en análisis numérico.</p>
+                  {isPending ? (
+                    <>
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-4 w-2/4" />
+                    </>
+                  ) : analysisResult ? (
+                    <>
+                      <p>Dominio X: {analysisResult.domain.x}</p>
+                      <p>Dominio Y: {analysisResult.domain.y}</p>
+                      <p>Rango Z: {analysisResult.range}</p>
+                    </>
+                  ) : (
+                     <p className="text-xs text-muted-foreground">Calcula para ver los resultados.</p>
+                  )}
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-2">
                 <AccordionTrigger>Derivadas Parciales y Gradiente</AccordionTrigger>
-                <AccordionContent className="font-code text-sm space-y-2">
-                  <p>∂f/∂x = cos(x) * cos(y)</p>
-                  <p>∂f/∂y = -sin(x) * sin(y)</p>
-                  <p>∇f = [cos(x)cos(y), -sin(x)sin(y)]</p>
+                <AccordionContent className="text-sm space-y-3">
+                   {isPending ? (
+                    <>
+                      <Skeleton className="h-6 w-full" />
+                      <Skeleton className="h-6 w-full" />
+                      <Skeleton className="h-6 w-full" />
+                    </>
+                  ) : analysisResult ? (
+                    <div className="font-code space-y-3">
+                      <p className='flex items-center gap-2'><span>∂f/∂x =</span> <InlineMath math={analysisResult.partialDerivativeX} /></p>
+                      <p className='flex items-center gap-2'><span>∂f/∂y =</span> <InlineMath math={analysisResult.partialDerivativeY} /></p>
+                      <p className='flex items-center gap-2'><span>∇f =</span> <InlineMath math={analysisResult.gradient} /></p>
+                    </div>
+                  ) : (
+                     <p className="text-xs text-muted-foreground">Calcula para ver los resultados.</p>
+                  )}
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
@@ -129,9 +183,12 @@ export function FunctionInputSection() {
               <Label htmlFor="guided-mode">Modo de Cálculo Guiado</Label>
             </div>
             
-            {state.guidedMode && <GuidedSteps />}
+            {state.guidedMode && <GuidedSteps isLoading={isPending} />}
 
-            <Button type="submit" className="w-full" disabled={!isValid}>Calcular y Graficar</Button>
+            <Button type="submit" className="w-full" disabled={!isValid || isPending}>
+              {isPending ? 'Calculando...' : 'Calcular y Graficar'}
+            </Button>
+            {analysisError && <p className="text-sm text-destructive text-center">{analysisError}</p>}
           </form>
         </Form>
       </CardContent>
