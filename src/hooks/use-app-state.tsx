@@ -43,6 +43,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(appStateReducer, initialState);
   const [history, setHistory] = useLocalStorage<AppState[]>('multicalc-history', []);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedSave = useCallback(
     debounce((appState: AppState) => {
       if (appState.func) {
@@ -59,11 +60,14 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   );
 
   useEffect(() => {
-    debouncedSave(state);
+    if (state.lastSaved !== null) {
+      debouncedSave(state);
+    }
     return () => {
       debouncedSave.cancel();
     };
   }, [state.func, state.guidedMode, debouncedSave, state]);
+
 
   return (
     <AppStateContext.Provider value={{ state, dispatch }}>
