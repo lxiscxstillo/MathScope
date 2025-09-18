@@ -12,6 +12,10 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowDown, ArrowUp, BrainCircuit } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import 'katex/dist/katex.min.css';
+import { BlockMath, InlineMath } from 'react-katex';
 
 const FormSchema = z.object({
   objectiveFunc: z.string().min(1, 'La función objetivo es obligatoria.'),
@@ -19,6 +23,32 @@ const FormSchema = z.object({
 });
 
 type FormValues = z.infer<typeof FormSchema>;
+
+// Componente para renderizar Markdown con soporte para LaTeX
+function MarkdownRenderer({ content }: { content: string }) {
+  return (
+    <ReactMarkdown
+      remarkPlugins={[remarkMath]}
+      components={{
+        p: ({ node, ...props }) => <p className="mb-2" {...props} />,
+        h1: ({ node, ...props }) => <h1 className="text-xl font-bold my-4" {...props} />,
+        h2: ({ node, ...props }) => <h2 className="text-lg font-semibold my-3" {...props} />,
+        ul: ({ node, ...props }) => <ul className="list-disc pl-5 mb-2" {...props} />,
+        ol: ({ node, ...props }) => <ol className="list-decimal pl-5 mb-2" {...props} />,
+        li: ({ node, ...props }) => <li className="mb-1" {...props} />,
+        code({ node, inline, className, children, ...props }) {
+          if (inline) {
+            return <InlineMath math={String(children)} />;
+          }
+          return <BlockMath math={String(children)} />;
+        },
+      }}
+    >
+      {content}
+    </ReactMarkdown>
+  );
+}
+
 
 export function OptimizationSection() {
   const [isPending, startTransition] = useTransition();
@@ -139,15 +169,15 @@ export function OptimizationSection() {
               </div>
             )}
              {result.calculationSteps && (
-               <Accordion type="single" collapsible className="w-full">
+               <Accordion type="single" collapsible className="w-full" defaultValue="steps">
                 <AccordionItem value="steps">
                   <AccordionTrigger className="text-sm">
                     Ver Pasos del Cálculo
                   </AccordionTrigger>
                   <AccordionContent>
-                      <div className="prose prose-sm max-w-none text-foreground p-2 bg-background rounded-md"
-                        dangerouslySetInnerHTML={{ __html: result.calculationSteps.replace(/\n/g, '<br />') }}
-                      />
+                      <div className="prose prose-sm max-w-none text-foreground p-2 bg-background rounded-md">
+                        <MarkdownRenderer content={result.calculationSteps} />
+                      </div>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>

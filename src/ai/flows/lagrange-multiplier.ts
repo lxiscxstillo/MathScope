@@ -25,7 +25,7 @@ export type LagrangeMultiplierInput = z.infer<typeof LagrangeMultiplierInputSche
 const LagrangeMultiplierOutputSchema = z.object({
   maxima: z.array(PointSchema).describe('Una lista de puntos donde la función alcanza un máximo.'),
   minima: z.array(PointSchema).describe('Una lista de puntos donde la función alcanza un mínimo.'),
-  calculationSteps: z.string().describe('Los pasos detallados del cálculo en formato Markdown.'),
+  calculationSteps: z.string().describe('Los pasos detallados del cálculo en formato Markdown con expresiones matemáticas en LaTeX (delimitadas por $ para inline y $$ para bloque).'),
 });
 export type LagrangeMultiplierOutput = z.infer<typeof LagrangeMultiplierOutputSchema>;
 
@@ -45,13 +45,10 @@ Restricción: g(x, y) = {{{constraintFunc}}} = 0
 Pasos a seguir:
 1. Define la función Lagrangiana: L(x, y, λ) = f(x, y) - λ * g(x, y).
 2. Calcula el gradiente de L: ∇L = [∂L/∂x, ∂L/∂y, ∂L/∂λ].
-3. Iguala el gradiente a cero para obtener el sistema de ecuaciones:
-   - ∂L/∂x = 0
-   - ∂L/∂y = 0
-   - ∂L/∂λ = 0  (que es la restricción original)
+3. Iguala el gradiente a cero para obtener el sistema de ecuaciones.
 4. Resuelve el sistema de ecuaciones para encontrar los puntos críticos (x, y) y el valor de λ.
 5. Evalúa la función objetivo f(x, y) en cada punto crítico para determinar si es un máximo o un mínimo.
-6. Formatea la salida en el JSON especificado, incluyendo los pasos detallados del cálculo en formato Markdown. Asegúrate de que los arrays 'maxima' y 'minima' contengan todos los puntos encontrados.
+6. Formatea la salida en el JSON especificado. Los pasos detallados del cálculo deben estar en formato Markdown. **IMPORTANTE**: Todas las expresiones matemáticas, variables y ecuaciones deben estar en formato LaTeX. Usa '$' para matemáticas inline (ej. $f(x)=x^2$) y '$$' para ecuaciones en bloque (ej. $$\\nabla L = 0$$). Asegúrate de que los arrays 'maxima' y 'minima' contengan todos los puntos encontrados.
 `,
 });
 
