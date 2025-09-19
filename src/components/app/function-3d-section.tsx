@@ -33,6 +33,7 @@ export function Function3DSection({ setFunc3D }: Function3DSectionProps) {
     defaultValues: {
       func: 'sin(sqrt(x^2 + y^2)) / sqrt(x^2 + y^2)',
     },
+    mode: 'onChange' // Validar en cada cambio
   });
 
   const validateFunction = (funcStr: string) => {
@@ -41,41 +42,54 @@ export function Function3DSection({ setFunc3D }: Function3DSectionProps) {
       return;
     }
     try {
-      math.parse(funcStr).compile().evaluate({ x: 1, y: 1 });
+      const node = math.parse(funcStr);
+      const compiled = node.compile();
+      // Test with dummy values
+      compiled.evaluate({ x: 1, y: 1 }); 
       setIsValid(true);
+      // If valid, update the graph in real-time
+      setFunc3D(funcStr);
     } catch (error) {
       setIsValid(false);
     }
   };
 
-  const debouncedValidate = useCallback(debounce(validateFunction, 300), []);
+  const debouncedValidate = useCallback(debounce(validateFunction, 300), [setFunc3D]);
 
   const handleFunctionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    form.setValue('func', value);
+    form.setValue('func', value, { shouldValidate: true });
     debouncedValidate(value);
   };
 
-  function onSubmit(data: z.infer<typeof FormSchema>) {
+  function onSubmitWithAI(data: z.infer<typeof FormSchema>) {
     startTransition(async () => {
       try {
         const result = await convertNaturalTo3DFunction({ description: data.func });
         const aiFunc = result.func;
         
-        form.setValue('func', aiFunc);
-        validateFunction(aiFunc);
-        setFunc3D(aiFunc);
+        form.setValue('func', aiFunc, { shouldValidate: true });
+        validateFunction(aiFunc); // This will also call setFunc3D
         toast({
-          title: 'Función Interpretada y Graficada',
-          description: `IA interpretó: z = ${aiFunc}`,
+          title: 'Función Interpretada por IA',
+          description: `Se ha graficado: z = ${aiFunc}`,
         });
       } catch (error) {
-         console.error('Error con la IA, usando la entrada directa', error);
-         setFunc3D(data.func);
-         toast({
-            title: 'Función Actualizada',
-            description: `Graficando la función: z = ${data.func}`,
-         });
+         console.error('Error con la IA, usando la entrada directa si es válida', error);
+         if (isValid) {
+            setFunc3D(data.func);
+            toast({
+                title: 'Error de IA',
+                description: `No se pudo interpretar. Graficando entrada directa: z = ${data.func}`,
+                variant: 'destructive'
+            });
+         } else {
+             toast({
+                title: 'Error',
+                description: `La función o descripción no es válida.`,
+                variant: 'destructive'
+            });
+         }
       }
     });
   }
@@ -84,11 +98,11 @@ export function Function3DSection({ setFunc3D }: Function3DSectionProps) {
     <Card>
       <CardHeader>
         <CardTitle>Análisis de Función 3D</CardTitle>
-        <CardDescription>Introduce una función z = f(x, y) o describe una forma en lenguaje natural.</CardDescription>
+        <CardDescription>Introduce una función `z = f(x, y)` o descríbela en lenguaje natural.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmitWithAI)} className="space-y-6">
             <FormField
               control={form.control}
               name="func"
@@ -103,20 +117,20 @@ export function Function3DSection({ setFunc3D }: Function3DSectionProps) {
                     )}
                   </div>
                   <FormControl>
-                    <Input placeholder="Ej: esfera de radio 2" {...field} onChange={handleFunctionChange} className="font-code" />
+                    <Input placeholder="Ej: sin(x) * cos(y) o esfera de radio 2" {...field} onChange={handleFunctionChange} className="font-code" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full" disabled={!isValid || isPending}>
+            <Button type="submit" className="w-full" disabled={isPending}>
               {isPending ? (
                 <>
                   <BrainCircuit className="mr-2 h-4 w-4 animate-pulse" />
-                  Interpretando...
+                  Interpretando con IA...
                 </>
               ) : (
-                'Graficar con IA'
+                'Interpretar con IA'
               )}
             </Button>
           </form>
