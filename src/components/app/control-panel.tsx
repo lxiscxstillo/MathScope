@@ -40,25 +40,25 @@ export function ControlPanel() {
             <span className="text-xs">Explicar</span>
           </TabsTrigger>
         </TabsList>
-        <div className="flex-1 overflow-y-auto">
-            <div className="p-4 pt-0">
-                <TabsContent value="function">
-                <FunctionInputSection />
-                </TabsContent>
-                <TabsContent value="integration">
-                <IntegrationSection />
-                </TabsContent>
-                <TabsContent value="optimization">
-                <OptimizationSection />
-                </TabsContent>
-                <TabsContent value="history">
-                <HistorySection />
-                </TabsContent>
-                <TabsContent value="explain">
-                <FormulaExplainer />
-                </TabsContent>
-            </div>
-        </div>
+        <ScrollArea className="flex-1">
+          <div className="p-4 pt-0">
+            <TabsContent value="function">
+              <FunctionInputSection />
+            </TabsContent>
+            <TabsContent value="integration">
+              <IntegrationSection />
+            </TabsContent>
+            <TabsContent value="optimization">
+              <OptimizationSection />
+            </TabsContent>
+            <TabsContent value="history">
+              <HistorySection />
+            </TabsContent>
+            <TabsContent value="explain">
+              <FormulaExplainer />
+            </TabsContent>
+          </div>
+        </ScrollArea>
       </Tabs>
     </aside>
   );

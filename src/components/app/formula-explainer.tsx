@@ -186,8 +186,8 @@ export function FormulaExplainer() {
             <CardTitle>Explicación</CardTitle>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-96 w-full rounded-md border">
-              <div className="p-4 whitespace-nowrap">
+            <ScrollArea className="h-96 w-full rounded-md border p-4">
+              <div className="prose prose-sm max-w-none text-foreground">
                 <MarkdownRenderer content={explanation} />
               </div>
             </ScrollArea>
