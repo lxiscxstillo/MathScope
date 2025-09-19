@@ -32,6 +32,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Lightbulb } from 'lucide-react';
 import { ScrollArea } from '../ui/scroll-area';
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import { BlockMath, InlineMath } from 'react-katex';
 
 const FormSchema = z.object({
   formula: z.string().min(1, 'Por favor, introduce una fórmula.'),
@@ -39,6 +42,27 @@ const FormSchema = z.object({
 });
 
 type FormValues = z.infer<typeof FormSchema>;
+
+// Componente para renderizar Markdown con soporte para LaTeX
+function MarkdownRenderer({ content }: { content: string }) {
+  return (
+    <ReactMarkdown
+      remarkPlugins={[remarkMath]}
+      components={{
+        p: ({ node, ...props }) => <p className="mb-2" {...props} />,
+        code({ node, inline, className, children, ...props }) {
+          if (inline) {
+            return <InlineMath math={String(children)} />;
+          }
+          return <BlockMath math={String(children)} />;
+        },
+      }}
+    >
+      {content}
+    </ReactMarkdown>
+  );
+}
+
 
 export function FormulaExplainer() {
   const [isPending, startTransition] = useTransition();
@@ -162,9 +186,9 @@ export function FormulaExplainer() {
             <CardTitle>Explicación</CardTitle>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-96 w-full">
-                <div className="prose prose-sm max-w-none text-foreground p-1 whitespace-pre-wrap">
-                    {explanation}
+            <ScrollArea className="h-96 w-full rounded-md border p-4">
+                <div className="prose prose-sm max-w-none text-foreground">
+                    <MarkdownRenderer content={explanation} />
                 </div>
             </ScrollArea>
           </CardContent>
