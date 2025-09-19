@@ -130,7 +130,7 @@ export function OptimizationSection() {
         <Card className="border-destructive">
           <CardHeader>
             <CardTitle className="text-destructive">Error</CardTitle>
-          </CardHeader>
+          </Header>
           <CardContent>
             <p>{error}</p>
           </CardContent>
@@ -179,7 +179,7 @@ export function OptimizationSection() {
                   </AccordionTrigger>
                   <AccordionContent>
                       <ScrollArea className="h-96 w-full rounded-md border">
-                        <div className="prose prose-sm max-w-none p-4 text-foreground min-w-fit">
+                        <div className="p-4 whitespace-nowrap">
                           <MarkdownRenderer content={result.calculationSteps} />
                         </div>
                       </ScrollArea>
