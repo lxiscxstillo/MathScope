@@ -42,7 +42,7 @@ Pasos a seguir:
     a. Calcula la primera derivada f'(x).
     b. Calcula la segunda derivada f''(x).
 4.  **Pasos de Cálculo**: Detalla el proceso para obtener las derivadas. Explica qué reglas de derivación usaste (regla de la cadena, del producto, etc.).
-5.  **Formato de Salida**: Formatea toda la salida en el JSON especificado. **IMPORTANTE**: Todas las expresiones matemáticas (derivadas, etc.) deben estar en formato LaTeX. Los pasos del cálculo deben estar en formato Markdown, usando '$' para matemáticas inline y '$$' para bloques.
+5.  **Formato de Salida**: Formatea toda la salida en el JSON especificado. **IMPORTANTE**: Todas las expresiones matemáticas (derivadas, etc.) deben estar en formato LaTeX. Los pasos del cálculo deben estar en formato Markdown, usando '$' para matemáticas inline y '$$' para bloques. **Para el campo 'calculationSteps', asegúrate de que las líneas de texto no excedan los 80 caracteres de ancho, insertando saltos de línea (\\n) para que el texto se ajuste y sea legible.**
 
 Ejemplo de Salida para f(x) = x^3:
 - firstDerivative: "3x^2"
