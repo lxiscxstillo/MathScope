@@ -130,7 +130,7 @@ export function OptimizationSection() {
         <Card className="border-destructive">
           <CardHeader>
             <CardTitle className="text-destructive">Error</CardTitle>
-          </Header>
+          </CardHeader>
           <CardContent>
             <p>{error}</p>
           </CardContent>
