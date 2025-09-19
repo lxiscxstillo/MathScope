@@ -5,7 +5,6 @@ import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { calculateIntegral, IntegralOutput } from '@/ai/flows/integral-calculation';
-import { useAppState } from '@/hooks/use-app-state';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,6 +28,7 @@ import { BlockMath, InlineMath } from 'react-katex';
 
 
 const FormSchema = z.object({
+  func: z.string().min(1, 'La función es obligatoria.'),
   integralType: z.enum(['double', 'triple']),
   limits: z.object({
     x_min: z.string().min(1, 'Requerido'),
@@ -71,7 +71,6 @@ function MarkdownRenderer({ content }: { content: string }) {
 }
 
 export function IntegrationSection() {
-  const { state: appState } = useAppState();
   const [isPending, startTransition] = useTransition();
   const [result, setResult] = useState<IntegralOutput | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -79,11 +78,12 @@ export function IntegrationSection() {
   const form = useForm<FormValues>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
+      func: 'x^2 * y',
       integralType: 'double',
       limits: {
-        x_min: '-2',
-        x_max: '2',
-        y_min: '-2',
+        x_min: '0',
+        x_max: '1',
+        y_min: '0',
         y_max: '2',
         z_min: '0',
         z_max: '1',
@@ -98,10 +98,7 @@ export function IntegrationSection() {
       setError(null);
       setResult(null);
       try {
-        const response = await calculateIntegral({
-            func: appState.func,
-            ...data
-        });
+        const response = await calculateIntegral(data);
         setResult(response);
       } catch (e) {
         setError('Ocurrió un error al calcular la integral. Revisa la función y los límites.');
@@ -116,12 +113,26 @@ export function IntegrationSection() {
       <CardHeader>
         <CardTitle>Integración Múltiple</CardTitle>
         <CardDescription>
-          Calcula integrales dobles y triples para la función activa.
+          Calcula integrales dobles y triples para una función.
         </CardDescription>
       </CardHeader>
       <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="func"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Función f(x, y, z)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Ej: x^2 + y^2" className="font-code" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 <FormField
                 control={form.control}
                 name="integralType"
@@ -210,10 +221,8 @@ export function IntegrationSection() {
                     <AccordionItem value="steps">
                     <AccordionTrigger className="text-sm">Ver Pasos del Cálculo</AccordionTrigger>
                     <AccordionContent>
-                        <ScrollArea className="h-96 w-full rounded-md border p-4">
-                            <div className="prose prose-sm max-w-none text-foreground">
-                                <MarkdownRenderer content={result.calculationSteps} />
-                            </div>
+                        <ScrollArea className="h-96 w-full rounded-md border p-4 whitespace-nowrap">
+                            <MarkdownRenderer content={result.calculationSteps} />
                         </ScrollArea>
                     </AccordionContent>
                     </AccordionItem>
