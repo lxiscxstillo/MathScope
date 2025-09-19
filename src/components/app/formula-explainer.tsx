@@ -31,6 +31,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Lightbulb } from 'lucide-react';
+import { ScrollArea } from '../ui/scroll-area';
 
 const FormSchema = z.object({
   formula: z.string().min(1, 'Por favor, introduce una fórmula.'),
@@ -160,8 +161,12 @@ export function FormulaExplainer() {
             <Lightbulb className="w-5 h-5 text-primary" />
             <CardTitle>Explicación</CardTitle>
           </CardHeader>
-          <CardContent className="prose prose-sm max-w-none text-foreground break-words whitespace-pre-wrap">
-            {explanation}
+          <CardContent>
+            <ScrollArea className="h-96 w-full">
+                <div className="prose prose-sm max-w-none text-foreground p-1 whitespace-pre-wrap">
+                    {explanation}
+                </div>
+            </ScrollArea>
           </CardContent>
         </Card>
       )}

@@ -178,8 +178,8 @@ export function OptimizationSection() {
                     Ver Pasos del Cálculo
                   </AccordionTrigger>
                   <AccordionContent>
-                      <ScrollArea className="h-72 w-full pr-4">
-                        <div className="prose prose-sm max-w-none text-foreground p-2 bg-background rounded-md whitespace-pre-wrap break-words">
+                      <ScrollArea className="h-72 w-full">
+                        <div className="prose prose-sm max-w-none text-foreground p-2 bg-background rounded-md whitespace-pre-wrap">
                           <MarkdownRenderer content={result.calculationSteps} />
                         </div>
                       </ScrollArea>
