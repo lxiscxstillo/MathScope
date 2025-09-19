@@ -160,10 +160,8 @@ export function FormulaExplainer() {
             <Lightbulb className="w-5 h-5 text-primary" />
             <CardTitle>Explicación</CardTitle>
           </CardHeader>
-          <CardContent className="prose prose-sm max-w-none text-foreground">
-            {explanation.split('\n').map((line, i) => (
-              <p key={i}>{line}</p>
-            ))}
+          <CardContent className="prose prose-sm max-w-none text-foreground break-words whitespace-pre-wrap">
+            {explanation}
           </CardContent>
         </Card>
       )}

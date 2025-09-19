@@ -211,7 +211,7 @@ export function IntegrationSection() {
                     <AccordionTrigger className="text-sm">Ver Pasos del Cálculo</AccordionTrigger>
                     <AccordionContent>
                         <ScrollArea className="h-72 w-full">
-                            <div className="prose prose-sm max-w-none text-foreground p-2 bg-background rounded-md whitespace-nowrap">
+                            <div className="prose prose-sm max-w-none text-foreground p-2 bg-background rounded-md whitespace-pre-wrap break-words">
                                 <MarkdownRenderer content={result.calculationSteps} />
                             </div>
                         </ScrollArea>

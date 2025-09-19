@@ -51,7 +51,7 @@ export function GuidedSteps({ isLoading }: { isLoading: boolean }) {
         )}
         {analysisResult?.calculationSteps && !isLoading && (
            <ScrollArea className="h-96 w-full">
-            <div className="p-4 bg-background rounded-lg shadow-sm whitespace-nowrap">
+            <div className="p-4 bg-background rounded-lg shadow-sm whitespace-pre-wrap break-words">
               <MarkdownRenderer content={analysisResult.calculationSteps} />
             </div>
            </ScrollArea>
