@@ -6,6 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import { BlockMath, InlineMath } from 'react-katex';
 import { Skeleton } from '../ui/skeleton';
+import { ScrollArea } from '../ui/scroll-area';
 
 // Componente para renderizar Markdown con soporte para LaTeX
 function MarkdownRenderer({ content }: { content: string }) {
@@ -49,9 +50,11 @@ export function GuidedSteps({ isLoading }: { isLoading: boolean }) {
           </div>
         )}
         {analysisResult?.calculationSteps && !isLoading && (
-          <div className="space-y-6 p-4 bg-background rounded-lg shadow-sm">
-             <MarkdownRenderer content={analysisResult.calculationSteps} />
-          </div>
+           <ScrollArea className="h-96 w-full pr-4">
+            <div className="space-y-6 p-4 bg-background rounded-lg shadow-sm">
+              <MarkdownRenderer content={analysisResult.calculationSteps} />
+            </div>
+           </ScrollArea>
         )}
         {!analysisResult && !isLoading && (
           <p className="text-sm text-muted-foreground text-center p-4">

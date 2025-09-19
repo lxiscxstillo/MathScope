@@ -17,8 +17,8 @@ import { SlidersHorizontal, FunctionSquare, History, Waypoints, HelpCircle } fro
 export function ControlPanel() {
   return (
     <aside className="w-full max-w-md border-r border-border flex flex-col">
-      <Tabs defaultValue="function" className="flex-1 flex flex-col">
-        <TabsList className="m-2 grid w-auto grid-cols-5">
+      <Tabs defaultValue="function" className="flex-1 flex flex-col overflow-hidden">
+        <TabsList className="m-2 grid w-auto grid-cols-5 shrink-0">
           <TabsTrigger value="function" className="h-auto py-2">
             <FunctionSquare className="w-5 h-5 mb-1" />
             <span className="text-xs">Función</span>
