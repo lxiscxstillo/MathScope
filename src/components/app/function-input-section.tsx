@@ -22,7 +22,7 @@ import { BlockMath, InlineMath } from 'react-katex';
 import { ScrollArea } from '../ui/scroll-area';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
-import { BrainCircuit, Lightbulb } from 'lucide-react';
+import { Lightbulb } from 'lucide-react';
 
 const FormSchema = z.object({
   func: z.string().min(1, 'La función es obligatoria.'),

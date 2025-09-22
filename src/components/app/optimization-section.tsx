@@ -192,7 +192,7 @@ export function OptimizationSection() {
               </div>
             )}
              {result.calculationSteps && (
-                <Accordion type="single" collapsible className="w-full pt-4" defaultValue="item-1">
+                <Accordion type="single" collapsible className="w-full pt-4">
                     <AccordionItem value="item-1">
                         <AccordionTrigger>
                         <div className="flex items-center gap-2">
