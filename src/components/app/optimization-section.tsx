@@ -11,7 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ArrowDown, ArrowUp, BrainCircuit } from 'lucide-react';
+import { ArrowDown, ArrowUp, BrainCircuit, Lightbulb } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
@@ -124,7 +124,27 @@ export function OptimizationSection() {
         </CardContent>
       </Card>
 
-      {isPending && <OptimizationSkeleton />}
+      {isPending && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BrainCircuit className="w-6 h-6 animate-pulse text-primary" />
+                Analizando con IA...
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Skeleton className="h-5 w-1/4" />
+                <Skeleton className="h-4 w-3/4" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-5 w-1/4" />
+                <Skeleton className="h-4 w-3/4" />
+              </div>
+              <Skeleton className="h-8 w-full mt-4" />
+            </CardContent>
+          </Card>
+      )}
 
       {error && (
         <Card className="border-destructive">
@@ -138,7 +158,7 @@ export function OptimizationSection() {
       )}
 
       {result && (
-        <Card className="bg-secondary/50">
+        <Card>
           <CardHeader>
             <CardTitle>Resultados de la Optimización</CardTitle>
           </CardHeader>
@@ -172,47 +192,27 @@ export function OptimizationSection() {
               </div>
             )}
              {result.calculationSteps && (
-               <Accordion type="single" collapsible className="w-full" defaultValue="steps">
-                <AccordionItem value="steps">
-                  <AccordionTrigger className="text-sm">
-                    Ver Pasos del Cálculo
-                  </AccordionTrigger>
-                  <AccordionContent>
-                      <ScrollArea className="h-96 w-full rounded-md border p-4">
-                        <div className="prose prose-sm max-w-none text-foreground">
-                          <MarkdownRenderer content={result.calculationSteps} />
+                <Accordion type="single" collapsible className="w-full pt-4" defaultValue="item-1">
+                    <AccordionItem value="item-1">
+                        <AccordionTrigger>
+                        <div className="flex items-center gap-2">
+                            <Lightbulb className="w-5 h-5 text-primary" />
+                            <span>Pasos del Cálculo (IA)</span>
                         </div>
-                      </ScrollArea>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
+                        </AccordionTrigger>
+                        <AccordionContent>
+                            <ScrollArea className="h-96 w-full rounded-md border p-4">
+                                <div className="prose prose-sm max-w-none text-foreground">
+                                <MarkdownRenderer content={result.calculationSteps} />
+                                </div>
+                            </ScrollArea>
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
              )}
           </CardContent>
         </Card>
       )}
     </div>
-  );
-}
-
-function OptimizationSkeleton() {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <BrainCircuit className="w-6 h-6 animate-pulse text-primary" />
-          Analizando con IA...
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Skeleton className="h-5 w-1/4" />
-          <Skeleton className="h-4 w-3/4" />
-        </div>
-        <div className="space-y-2">
-          <Skeleton className="h-5 w-1/4" />
-          <Skeleton className="h-4 w-3/4" />
-        </div>
-      </CardContent>
-    </Card>
   );
 }

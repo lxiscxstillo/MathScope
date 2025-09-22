@@ -14,16 +14,42 @@ import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { GuidedSteps } from './guided-steps';
 import { useAppState } from '@/hooks/use-app-state';
 import { useToast } from '@/hooks/use-toast';
 import { analyzeFunction, FunctionAnalysisOutput } from '@/ai/flows/function-analysis';
 import { Skeleton } from '../ui/skeleton';
 import { BlockMath, InlineMath } from 'react-katex';
+import { ScrollArea } from '../ui/scroll-area';
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import { BrainCircuit, Lightbulb } from 'lucide-react';
 
 const FormSchema = z.object({
   func: z.string().min(1, 'La función es obligatoria.'),
 });
+
+// Componente para renderizar Markdown con soporte para LaTeX
+function MarkdownRenderer({ content }: { content: string }) {
+  return (
+    <ReactMarkdown
+      remarkPlugins={[remarkMath]}
+      components={{
+        p: ({ node, ...props }) => <p className="mb-4" {...props} />,
+        h3: ({ node, ...props }) => <h3 className="font-semibold text-primary mb-2" {...props} />,
+        code({ node, inline, className, children, ...props }) {
+          const match = /language-(\w+)/.exec(className || '');
+          if (inline) {
+            return <InlineMath math={String(children)} />;
+          }
+          return <div className="my-4"><BlockMath math={String(children)} /></div>;
+        },
+      }}
+    >
+      {content}
+    </ReactMarkdown>
+  );
+}
+
 
 export function FunctionInputSection() {
   const { state, dispatch } = useAppState();
@@ -44,7 +70,6 @@ export function FunctionInputSection() {
   useEffect(() => {
     form.setValue('func', state.func);
     validateFunction(state.func);
-    // Cuando la función cambia (ej. modo demo), limpiamos los resultados anteriores y recalculamos.
     setAnalysisResult(null);
     setAnalysisError(null);
     if(state.func) {
@@ -107,6 +132,7 @@ export function FunctionInputSection() {
 
 
   return (
+    <div className="space-y-6">
     <Card>
       <CardHeader>
         <CardTitle>Análisis de Función 1D</CardTitle>
@@ -136,7 +162,7 @@ export function FunctionInputSection() {
               )}
             />
 
-            <Accordion type="single" collapsible className="w-full" defaultValue="item-1">
+            <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="item-1">
                 <AccordionTrigger>Dominio y Rango (Estimado)</AccordionTrigger>
                 <AccordionContent className="font-code text-sm space-y-2">
@@ -179,8 +205,6 @@ export function FunctionInputSection() {
               <Switch id="guided-mode" checked={state.guidedMode} onCheckedChange={toggleGuidedMode} />
               <Label htmlFor="guided-mode">Modo de Cálculo Guiado</Label>
             </div>
-            
-            {state.guidedMode && <GuidedSteps isLoading={isPending} />}
 
             <Button type="submit" className="w-full" disabled={!isValid || isPending}>
               {isPending ? 'Calculando...' : 'Calcular y Graficar'}
@@ -190,5 +214,32 @@ export function FunctionInputSection() {
         </Form>
       </CardContent>
     </Card>
+
+    {(isPending || (analysisResult && state.guidedMode)) && (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Lightbulb className="w-5 h-5 text-primary" />
+            Explicación Detallada (IA)
+            </CardTitle>
+        </CardHeader>
+        <CardContent>
+           {isPending ? (
+             <div className="space-y-2 pt-2">
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
+              </div>
+          ): analysisResult?.calculationSteps && (
+            <ScrollArea className="h-96 w-full rounded-md border">
+              <div className="p-4 whitespace-nowrap">
+                <MarkdownRenderer content={analysisResult.calculationSteps} />
+              </div>
+            </ScrollArea>
+          )}
+        </CardContent>
+      </Card>
+    )}
+    </div>
   );
 }
