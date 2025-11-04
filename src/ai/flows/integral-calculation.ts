@@ -65,10 +65,15 @@ const integralCalculationFlow = ai.defineFlow(
     outputSchema: IntegralOutputSchema,
   },
   async (input) => {
-    const { output } = await integralPrompt(input);
-    if (!output) {
-      throw new Error('La IA no pudo resolver la integral.');
+    try {
+      const { output } = await integralPrompt(input);
+      if (!output) {
+        throw new Error('La IA no pudo resolver la integral.');
+      }
+      return output;
+    } catch (error) {
+      console.error('Error en el flujo de cálculo de integral:', error);
+      throw new Error('El servicio de IA no está disponible o la solicitud ha fallado. Por favor, inténtalo de nuevo más tarde.');
     }
-    return output;
   }
 );

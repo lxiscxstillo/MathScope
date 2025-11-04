@@ -58,10 +58,15 @@ const functionAnalysisFlow = ai.defineFlow(
     outputSchema: FunctionAnalysisOutputSchema,
   },
   async (input) => {
-    const { output } = await analysisPrompt(input);
-    if (!output) {
-      throw new Error('La IA no pudo analizar la función.');
+    try {
+      const { output } = await analysisPrompt(input);
+      if (!output) {
+        throw new Error('La IA no pudo analizar la función.');
+      }
+      return output;
+    } catch (error) {
+      console.error('Error en el flujo de análisis de función:', error);
+      throw new Error('El servicio de IA no está disponible o la solicitud ha fallado. Por favor, inténtalo de nuevo más tarde.');
     }
-    return output;
   }
 );

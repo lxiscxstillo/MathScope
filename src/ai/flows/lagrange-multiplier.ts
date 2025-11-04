@@ -58,11 +58,16 @@ const lagrangeMultiplierFlow = ai.defineFlow(
     inputSchema: LagrangeMultiplierInputSchema,
     outputSchema: LagrangeMultiplierOutputSchema,
   },
-  async (input) => {
-    const { output } = await lagrangePrompt(input);
-    if (!output) {
-      throw new Error('La IA no pudo resolver el problema de optimización.');
+async (input) => {
+    try {
+      const { output } = await lagrangePrompt(input);
+      if (!output) {
+        throw new Error('La IA no pudo resolver el problema de optimización.');
+      }
+      return output;
+    } catch (error) {
+      console.error('Error en el flujo de multiplicadores de Lagrange:', error);
+      throw new Error('El servicio de IA no está disponible o la solicitud ha fallado. Por favor, inténtalo de nuevo más tarde.');
     }
-    return output;
   }
 );

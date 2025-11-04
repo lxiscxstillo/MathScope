@@ -70,20 +70,28 @@ const explainFormulaFlow = ai.defineFlow(
     outputSchema: ExplainFormulaOutputSchema,
   },
   async input => {
-    // 1. Convertir la fórmula de entrada a LaTeX
-    const conversionResult = await latexConversionPrompt({ formula: input.formula });
-    const latexFormula = conversionResult.output?.latex;
+    try {
+      // 1. Convertir la fórmula de entrada a LaTeX
+      const conversionResult = await latexConversionPrompt({ formula: input.formula });
+      const latexFormula = conversionResult.output?.latex;
 
-    if (!latexFormula) {
-      throw new Error("No se pudo convertir la fórmula a LaTeX.");
+      if (!latexFormula) {
+        throw new Error("No se pudo convertir la fórmula a LaTeX.");
+      }
+      
+      // 2. Explicar la fórmula LaTeX
+      const {output} = await formulaExplanationPrompt({ 
+        latex: latexFormula,
+        language: input.language 
+      });
+
+      if (!output) {
+        throw new Error('La IA no pudo generar una explicación.');
+      }
+      return output;
+    } catch (error) {
+      console.error('Error en el flujo de explicación de fórmula:', error);
+      throw new Error('El servicio de IA no está disponible o la solicitud ha fallado. Por favor, inténtalo de nuevo más tarde.');
     }
-    
-    // 2. Explicar la fórmula LaTeX
-    const {output} = await formulaExplanationPrompt({ 
-      latex: latexFormula,
-      language: input.language 
-    });
-
-    return output!;
   }
 );

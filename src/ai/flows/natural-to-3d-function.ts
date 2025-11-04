@@ -64,10 +64,15 @@ const naturalTo3DFunctionFlow = ai.defineFlow(
     outputSchema: NaturalTo3DFunctionOutputSchema,
   },
   async (input) => {
-    const { output } = await conversionPrompt(input);
-    if (!output) {
-      throw new Error('La IA no pudo convertir la descripción a una fórmula.');
+    try {
+      const { output } = await conversionPrompt(input);
+      if (!output) {
+        throw new Error('La IA no pudo convertir la descripción a una fórmula.');
+      }
+      return output;
+    } catch (error) {
+      console.error('Error en el flujo de conversión de natural a 3D:', error);
+      throw new Error('El servicio de IA no está disponible o la solicitud ha fallado. Por favor, inténtalo de nuevo más tarde.');
     }
-    return output;
   }
 );
