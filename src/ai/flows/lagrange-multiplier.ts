@@ -29,12 +29,8 @@ const LagrangeMultiplierOutputSchema = z.object({
 });
 export type LagrangeMultiplierOutput = z.infer<typeof LagrangeMultiplierOutputSchema>;
 
-export async function solveWithLagrange(input: LagrangeMultiplierInput): Promise<LagrangeMultiplierOutput> {
-  const result = await lagrangeMultiplierFlow(input);
-  if ('error' in result) {
-      throw new Error(result.error);
-  }
-  return result;
+export async function solveWithLagrange(input: LagrangeMultiplierInput): Promise<LagrangeMultiplierOutput | { error: string }> {
+  return await lagrangeMultiplierFlow(input);
 }
 
 const lagrangePrompt = ai.definePrompt({

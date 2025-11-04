@@ -25,12 +25,8 @@ const FunctionAnalysisOutputSchema = z.object({
 });
 export type FunctionAnalysisOutput = z.infer<typeof FunctionAnalysisOutputSchema>;
 
-export async function analyzeFunction(input: FunctionAnalysisInput): Promise<FunctionAnalysisOutput> {
-    const result = await functionAnalysisFlow(input);
-    if ('error' in result) {
-        throw new Error(result.error);
-    }
-    return result;
+export async function analyzeFunction(input: FunctionAnalysisInput): Promise<FunctionAnalysisOutput | { error: string }> {
+    return await functionAnalysisFlow(input);
 }
 
 const analysisPrompt = ai.definePrompt({

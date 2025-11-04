@@ -31,12 +31,8 @@ const IntegralOutputSchema = z.object({
 });
 export type IntegralOutput = z.infer<typeof IntegralOutputSchema>;
 
-export async function calculateIntegral(input: IntegralInput): Promise<IntegralOutput> {
-  const result = await integralCalculationFlow(input);
-  if ('error' in result) {
-      throw new Error(result.error);
-  }
-  return result;
+export async function calculateIntegral(input: IntegralInput): Promise<IntegralOutput | { error: string }> {
+  return await integralCalculationFlow(input);
 }
 
 const integralPrompt = ai.definePrompt({

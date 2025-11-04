@@ -22,12 +22,8 @@ const ExplainFormulaOutputSchema = z.object({
 });
 export type ExplainFormulaOutput = z.infer<typeof ExplainFormulaOutputSchema>;
 
-export async function explainFormula(input: ExplainFormulaInput): Promise<ExplainFormulaOutput> {
-  const result = await explainFormulaFlow(input);
-  if ('error' in result) {
-    throw new Error(result.error);
-  }
-  return result;
+export async function explainFormula(input: ExplainFormulaInput): Promise<ExplainFormulaOutput | { error: string }> {
+  return await explainFormulaFlow(input);
 }
 
 // Prompt para convertir la fórmula de lenguaje natural a LaTeX

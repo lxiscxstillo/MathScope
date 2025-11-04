@@ -21,12 +21,8 @@ const NaturalTo3DFunctionOutputSchema = z.object({
 });
 export type NaturalTo3DFunctionOutput = z.infer<typeof NaturalTo3DFunctionOutputSchema>;
 
-export async function convertNaturalTo3DFunction(input: NaturalTo3DFunctionInput): Promise<NaturalTo3DFunctionOutput> {
-  const result = await naturalTo3DFunctionFlow(input);
-  if ('error' in result) {
-      throw new Error(result.error);
-  }
-  return result;
+export async function convertNaturalTo3DFunction(input: NaturalTo3DFunctionInput): Promise<NaturalTo3DFunctionOutput | { error: string }> {
+  return await naturalTo3DFunctionFlow(input);
 }
 
 const conversionPrompt = ai.definePrompt({
