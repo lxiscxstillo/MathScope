@@ -30,7 +30,11 @@ const LagrangeMultiplierOutputSchema = z.object({
 export type LagrangeMultiplierOutput = z.infer<typeof LagrangeMultiplierOutputSchema>;
 
 export async function solveWithLagrange(input: LagrangeMultiplierInput): Promise<LagrangeMultiplierOutput> {
-  return lagrangeMultiplierFlow(input);
+  const result = await lagrangeMultiplierFlow(input);
+  if ('error' in result) {
+      throw new Error(result.error);
+  }
+  return result;
 }
 
 const lagrangePrompt = ai.definePrompt({
@@ -56,18 +60,18 @@ const lagrangeMultiplierFlow = ai.defineFlow(
   {
     name: 'lagrangeMultiplierFlow',
     inputSchema: LagrangeMultiplierInputSchema,
-    outputSchema: LagrangeMultiplierOutputSchema,
+    outputSchema: z.union([LagrangeMultiplierOutputSchema, z.object({ error: z.string() })]),
   },
 async (input) => {
     try {
       const { output } = await lagrangePrompt(input);
       if (!output) {
-        throw new Error('La IA no pudo resolver el problema de optimización.');
+        return { error: 'La IA no pudo resolver el problema de optimización.' };
       }
       return output;
     } catch (error) {
       console.error('Error en el flujo de multiplicadores de Lagrange:', error);
-      throw new Error('El servicio de IA no está disponible o la solicitud ha fallado. Por favor, inténtalo de nuevo más tarde.');
+      return { error: 'El servicio de IA no está disponible o la solicitud ha fallado. Por favor, inténtalo de nuevo más tarde.' };
     }
   }
 );

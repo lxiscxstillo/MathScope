@@ -32,7 +32,11 @@ const IntegralOutputSchema = z.object({
 export type IntegralOutput = z.infer<typeof IntegralOutputSchema>;
 
 export async function calculateIntegral(input: IntegralInput): Promise<IntegralOutput> {
-  return integralCalculationFlow(input);
+  const result = await integralCalculationFlow(input);
+  if ('error' in result) {
+      throw new Error(result.error);
+  }
+  return result;
 }
 
 const integralPrompt = ai.definePrompt({
@@ -62,18 +66,18 @@ const integralCalculationFlow = ai.defineFlow(
   {
     name: 'integralCalculationFlow',
     inputSchema: IntegralInputSchema,
-    outputSchema: IntegralOutputSchema,
+    outputSchema: z.union([IntegralOutputSchema, z.object({ error: z.string() })]),
   },
   async (input) => {
     try {
       const { output } = await integralPrompt(input);
       if (!output) {
-        throw new Error('La IA no pudo resolver la integral.');
+        return { error: 'La IA no pudo resolver la integral.' };
       }
       return output;
     } catch (error) {
       console.error('Error en el flujo de cálculo de integral:', error);
-      throw new Error('El servicio de IA no está disponible o la solicitud ha fallado. Por favor, inténtalo de nuevo más tarde.');
+      return { error: 'El servicio de IA no está disponible o la solicitud ha fallado. Por favor, inténtalo de nuevo más tarde.' };
     }
   }
 );

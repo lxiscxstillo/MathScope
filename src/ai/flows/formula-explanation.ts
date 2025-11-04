@@ -23,7 +23,11 @@ const ExplainFormulaOutputSchema = z.object({
 export type ExplainFormulaOutput = z.infer<typeof ExplainFormulaOutputSchema>;
 
 export async function explainFormula(input: ExplainFormulaInput): Promise<ExplainFormulaOutput> {
-  return explainFormulaFlow(input);
+  const result = await explainFormulaFlow(input);
+  if ('error' in result) {
+    throw new Error(result.error);
+  }
+  return result;
 }
 
 // Prompt para convertir la fórmula de lenguaje natural a LaTeX
@@ -67,7 +71,7 @@ const explainFormulaFlow = ai.defineFlow(
   {
     name: 'explainFormulaFlow',
     inputSchema: ExplainFormulaInputSchema,
-    outputSchema: ExplainFormulaOutputSchema,
+    outputSchema: z.union([ExplainFormulaOutputSchema, z.object({ error: z.string() })]),
   },
   async input => {
     try {
@@ -76,7 +80,7 @@ const explainFormulaFlow = ai.defineFlow(
       const latexFormula = conversionResult.output?.latex;
 
       if (!latexFormula) {
-        throw new Error("No se pudo convertir la fórmula a LaTeX.");
+        return { error: "No se pudo convertir la fórmula a LaTeX." };
       }
       
       // 2. Explicar la fórmula LaTeX
@@ -86,12 +90,12 @@ const explainFormulaFlow = ai.defineFlow(
       });
 
       if (!output) {
-        throw new Error('La IA no pudo generar una explicación.');
+        return { error: 'La IA no pudo generar una explicación.' };
       }
       return output;
     } catch (error) {
       console.error('Error en el flujo de explicación de fórmula:', error);
-      throw new Error('El servicio de IA no está disponible o la solicitud ha fallado. Por favor, inténtalo de nuevo más tarde.');
+      return { error: 'El servicio de IA no está disponible o la solicitud ha fallado. Por favor, inténtalo de nuevo más tarde.' };
     }
   }
 );

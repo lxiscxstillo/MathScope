@@ -22,7 +22,11 @@ const NaturalTo3DFunctionOutputSchema = z.object({
 export type NaturalTo3DFunctionOutput = z.infer<typeof NaturalTo3DFunctionOutputSchema>;
 
 export async function convertNaturalTo3DFunction(input: NaturalTo3DFunctionInput): Promise<NaturalTo3DFunctionOutput> {
-  return naturalTo3DFunctionFlow(input);
+  const result = await naturalTo3DFunctionFlow(input);
+  if ('error' in result) {
+      throw new Error(result.error);
+  }
+  return result;
 }
 
 const conversionPrompt = ai.definePrompt({
@@ -61,18 +65,18 @@ const naturalTo3DFunctionFlow = ai.defineFlow(
   {
     name: 'naturalTo3DFunctionFlow',
     inputSchema: NaturalTo3DFunctionInputSchema,
-    outputSchema: NaturalTo3DFunctionOutputSchema,
+    outputSchema: z.union([NaturalTo3DFunctionOutputSchema, z.object({ error: z.string() })]),
   },
   async (input) => {
     try {
       const { output } = await conversionPrompt(input);
       if (!output) {
-        throw new Error('La IA no pudo convertir la descripción a una fórmula.');
+        return { error: 'La IA no pudo convertir la descripción a una fórmula.' };
       }
       return output;
     } catch (error) {
       console.error('Error en el flujo de conversión de natural a 3D:', error);
-      throw new Error('El servicio de IA no está disponible o la solicitud ha fallado. Por favor, inténtalo de nuevo más tarde.');
+      return { error: 'El servicio de IA no está disponible o la solicitud ha fallado. Por favor, inténtalo de nuevo más tarde.' };
     }
   }
 );

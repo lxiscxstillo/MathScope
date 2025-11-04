@@ -26,7 +26,11 @@ const FunctionAnalysisOutputSchema = z.object({
 export type FunctionAnalysisOutput = z.infer<typeof FunctionAnalysisOutputSchema>;
 
 export async function analyzeFunction(input: FunctionAnalysisInput): Promise<FunctionAnalysisOutput> {
-  return functionAnalysisFlow(input);
+    const result = await functionAnalysisFlow(input);
+    if ('error' in result) {
+        throw new Error(result.error);
+    }
+    return result;
 }
 
 const analysisPrompt = ai.definePrompt({
@@ -55,18 +59,18 @@ const functionAnalysisFlow = ai.defineFlow(
   {
     name: 'functionAnalysisFlow',
     inputSchema: FunctionAnalysisInputSchema,
-    outputSchema: FunctionAnalysisOutputSchema,
+    outputSchema: z.union([FunctionAnalysisOutputSchema, z.object({ error: z.string() })]),
   },
   async (input) => {
     try {
       const { output } = await analysisPrompt(input);
       if (!output) {
-        throw new Error('La IA no pudo analizar la función.');
+        return { error: 'La IA no pudo analizar la función.' };
       }
       return output;
     } catch (error) {
       console.error('Error en el flujo de análisis de función:', error);
-      throw new Error('El servicio de IA no está disponible o la solicitud ha fallado. Por favor, inténtalo de nuevo más tarde.');
+      return { error: 'El servicio de IA no está disponible o la solicitud ha fallado. Por favor, inténtalo de nuevo más tarde.' };
     }
   }
 );
