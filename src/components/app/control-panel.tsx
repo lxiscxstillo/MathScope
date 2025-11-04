@@ -14,11 +14,12 @@ import { OptimizationSection } from '@/components/app/optimization-section';
 import { HistorySection } from '@/components/app/history-section';
 import { SlidersHorizontal, FunctionSquare, History, Waypoints } from 'lucide-react';
 import { Plot3d } from '../icons';
+import * as math from 'mathjs';
 
 type ControlPanelProps = {
   activeTab: string;
   setActiveTab: (value: string) => void;
-  setFunc3D: (value: string) => void;
+  setFunc3D: (value: { str: string; gradFns: { fx: math.EvalFunction; fy: math.EvalFunction; } | null; }) => void;
 };
 
 

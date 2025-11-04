@@ -1,5 +1,5 @@
 'use client';
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -21,6 +21,7 @@ type PartialAnalysis = {
   firstPartialY: string;
   secondPartialX: string;
   secondPartialY: string;
+  gradient: string;
 }
 
 const FormSchema = z.object({
@@ -28,7 +29,7 @@ const FormSchema = z.object({
 });
 
 type Function3DSectionProps = {
-  setFunc3D: (func: string) => void;
+  setFunc3D: (value: { str: string; gradFns: { fx: math.EvalFunction, fy: math.EvalFunction } | null }) => void;
 };
 
 export function Function3DSection({ setFunc3D }: Function3DSectionProps) {
@@ -47,6 +48,7 @@ export function Function3DSection({ setFunc3D }: Function3DSectionProps) {
     if (!funcStr) {
       setIsValid(null);
       setAnalysis(null);
+      setFunc3D({ str: funcStr, gradFns: null });
       return;
     }
     try {
@@ -55,24 +57,32 @@ export function Function3DSection({ setFunc3D }: Function3DSectionProps) {
       compiled.evaluate({ x: 1, y: 1 });
       setIsValid(true);
 
-      const derivativeFx = math.derivative(funcStr, 'x').toString();
-      const derivativeFy = math.derivative(funcStr, 'y').toString();
-      const derivativeFxx = math.derivative(derivativeFx, 'x').toString();
-      const derivativeFyy = math.derivative(derivativeFy, 'y').toString();
+      const derivativeFxNode = math.derivative(funcStr, 'x');
+      const derivativeFyNode = math.derivative(funcStr, 'y');
+      const derivativeFxx = math.derivative(derivativeFxNode, 'x').toString();
+      const derivativeFyy = math.derivative(derivativeFyNode, 'y').toString();
 
       setAnalysis({
         domain: "x: (-∞, ∞), y: (-∞, ∞)",
         range: "Estimado: [-0.217, 1]",
-        firstPartialX: math.parse(derivativeFx).toTex(),
-        firstPartialY: math.parse(derivativeFy).toTex(),
+        firstPartialX: derivativeFxNode.toTex(),
+        firstPartialY: derivativeFyNode.toTex(),
         secondPartialX: math.parse(derivativeFxx).toTex(),
         secondPartialY: math.parse(derivativeFyy).toTex(),
+        gradient: `\\nabla f(x, y) = \\left( ${derivativeFxNode.toTex()}, \\, ${derivativeFyNode.toTex()} \\right)`
       });
       
-      setFunc3D(funcStr);
+      setFunc3D({
+        str: funcStr, 
+        gradFns: {
+          fx: derivativeFxNode.compile(),
+          fy: derivativeFyNode.compile(),
+        }
+      });
     } catch (error) {
       setIsValid(false);
       setAnalysis(null);
+      setFunc3D({ str: funcStr, gradFns: null });
     }
   }, [setFunc3D]);
 
@@ -144,6 +154,14 @@ export function Function3DSection({ setFunc3D }: Function3DSectionProps) {
                     <p className='flex items-center gap-2'><span>∂z/∂y =</span> <InlineMath math={analysis.firstPartialY} /></p>
                     <p className='flex items-center gap-2'><span>∂²z/∂x² =</span> <InlineMath math={analysis.secondPartialX} /></p>
                     <p className='flex items-center gap-2'><span>∂²z/∂y² =</span> <InlineMath math={analysis.secondPartialY} /></p>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="item-3">
+                <AccordionTrigger>Gradiente</AccordionTrigger>
+                <AccordionContent className="text-sm space-y-3">
+                  <div className="font-code">
+                    <p className='flex items-center gap-2'><InlineMath math={analysis.gradient} /></p>
                   </div>
                 </AccordionContent>
               </AccordionItem>

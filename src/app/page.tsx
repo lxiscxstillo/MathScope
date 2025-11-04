@@ -5,10 +5,14 @@ import { AppStateProvider } from '@/hooks/use-app-state';
 import { VisualizationPanel } from '@/components/app/visualization-panel';
 import { VisualizationPanel3D } from '@/components/app/visualization-panel-3d';
 import { useState } from 'react';
+import * as math from 'mathjs';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState('function');
-  const [func3D, setFunc3D] = useState('sin(sqrt(x^2 + y^2)) / sqrt(x^2 + y^2)');
+  const [func3D, setFunc3D] = useState<{str: string, gradFns: {fx: math.EvalFunction, fy: math.EvalFunction} | null}>({
+    str: 'sin(sqrt(x^2 + y^2)) / sqrt(x^2 + y^2)',
+    gradFns: null
+  });
 
   return (
     <AppStateProvider>
@@ -21,7 +25,7 @@ export default function Home() {
             setFunc3D={setFunc3D}
           />
           {activeTab === 'function-3d' ? (
-            <VisualizationPanel3D funcStr={func3D} />
+            <VisualizationPanel3D funcStr={func3D.str} gradFns={func3D.gradFns} />
           ) : (
             <VisualizationPanel />
           )}

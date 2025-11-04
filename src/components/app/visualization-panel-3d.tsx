@@ -2,18 +2,26 @@
 import React, { useRef, useEffect, useState, useMemo } from 'react';
 import * as math from 'mathjs';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Blend } from 'lucide-react';
+import { Switch } from '../ui/switch';
+import { Label } from '../ui/label';
 
 type Point3D = [number, number, number];
 type Point2D = [number, number];
 
-export function VisualizationPanel3D({ funcStr }: { funcStr: string }) {
+type VisualizationPanel3DProps = {
+  funcStr: string;
+  gradFns: { fx: math.EvalFunction, fy: math.EvalFunction } | null;
+};
+
+export function VisualizationPanel3D({ funcStr, gradFns }: VisualizationPanel3DProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [error, setError] = useState<string | null>(null);
 
   const [angles, setAngles] = useState({ x: -0.5, y: 0.5, z: 0 });
   const [zoom, setZoom] = useState(25);
   const dragStart = useRef<{ x: number; y: number; angles: typeof angles } | null>(null);
+  const [showGradient, setShowGradient] = useState(false);
 
   const { parsedFunc, data, zRange } = useMemo(() => {
     if (!funcStr) {
@@ -49,7 +57,12 @@ export function VisualizationPanel3D({ funcStr }: { funcStr: string }) {
         }
       }
       
-      const finalZRange = isFinite(minZ) && isFinite(maxZ) ? { min: Math.floor(minZ), max: Math.ceil(maxZ) } : { min: -5, max: 5 };
+      const finalZRange = isFinite(minZ) && isFinite(maxZ) ? { min: minZ, max: maxZ } : { min: -5, max: 5 };
+      if (finalZRange.min === finalZRange.max) {
+        finalZRange.min -= 1;
+        finalZRange.max += 1;
+      }
+
 
       return { parsedFunc: compiled, data: points, zRange: finalZRange };
     } catch (e: any) {
@@ -235,19 +248,71 @@ export function VisualizationPanel3D({ funcStr }: { funcStr: string }) {
         }
         context.stroke();
       }
+
+      // Draw gradient field
+      if (showGradient && gradFns) {
+        context.strokeStyle = 'hsl(var(--accent))';
+        context.lineWidth = 1;
+        const gradStep = 2; // draw fewer vectors than grid lines
+
+        for (let x = -range; x <= range; x += gradStep) {
+          for (let y = -range; y <= range; y += gradStep) {
+            try {
+              const z = parsedFunc.evaluate({x, y});
+              if (!isFinite(z)) continue;
+              
+              const gradX = gradFns.fx.evaluate({x, y});
+              const gradY = gradFns.fy.evaluate({x, y});
+
+              // Normalize gradient for consistent arrow length
+              const mag = Math.sqrt(gradX*gradX + gradY*gradY);
+              const scale = 0.8;
+              const dx = mag > 0 ? (gradX / mag) * scale : 0;
+              const dy = mag > 0 ? (gradY / mag) * scale : 0;
+              
+              const startPoint: Point3D = [x, y, z];
+              const endPoint: Point3D = [x + dx, y + dy, parsedFunc.evaluate({x: x + dx, y: y + dy})];
+
+              const p1 = project(startPoint);
+              const p2 = project(endPoint);
+              
+              context.beginPath();
+              context.moveTo(p1[0], p1[1]);
+              context.lineTo(p2[0], p2[1]);
+              context.stroke();
+
+            } catch (e) {
+              // ignore points where gradient fails
+            }
+          }
+        }
+      }
+
     }
 
-  }, [funcStr, parsedFunc, data, zRange, error, angles, zoom]);
+  }, [funcStr, parsedFunc, data, zRange, error, angles, zoom, showGradient, gradFns]);
 
   return (
     <div id="visualization-panel" className="flex-1 flex flex-col p-4 bg-muted/30">
       <Card className="flex-1 flex flex-col">
         <CardHeader>
-          <div>
-            <CardTitle>Calculadora Gráfica 3D</CardTitle>
-            <CardDescription className="font-code text-primary pt-1">
-              z = {funcStr || 'Ninguna función definida'}
-            </CardDescription>
+          <div className="flex justify-between items-start">
+            <div>
+              <CardTitle>Calculadora Gráfica 3D</CardTitle>
+              <CardDescription className="font-code text-primary pt-1">
+                z = {funcStr || 'Ninguna función definida'}
+              </CardDescription>
+            </div>
+             <div className="flex items-center space-x-2">
+                <Blend className="w-4 h-4 text-muted-foreground" />
+                <Label htmlFor="gradient-switch">Ver Gradiente</Label>
+                <Switch 
+                  id="gradient-switch" 
+                  checked={showGradient}
+                  onCheckedChange={setShowGradient}
+                  disabled={!gradFns}
+                />
+            </div>
           </div>
         </CardHeader>
         <CardContent className="flex-1 flex items-center justify-center relative bg-background rounded-b-lg overflow-hidden p-0">
