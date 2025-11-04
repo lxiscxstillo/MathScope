@@ -61,14 +61,12 @@ function MarkdownRenderer({ content }: { content: string }) {
         code({ node, inline, className, children, ...props }) {
           const match = /language-(\w+)/.exec(className || '');
           if (inline) {
-            // Es una fórmula inline (ej. $...$)
             return <InlineMath math={String(children)} />;
-          } else if (match) {
-             // Es un bloque de fórmula (ej. ```math...```)
+          }
+          if (match) {
             return <BlockMath math={String(children).replace(/\n$/, '')} />;
           }
-          // Es un bloque de código normal
-          return <code className={className} {...props}>{children}</code>;
+          return <div className="my-2"><BlockMath math={String(children).replace(/\n$/, '')} /></div>;
         },
       }}
     >
@@ -105,19 +103,23 @@ export function IntegrationSection() {
     startTransition(async () => {
       setError(null);
       setResult(null);
-      try {
-        const response = await calculateIntegral(data);
-        if ('error' in response) throw new Error((response as any).error);
-        setResult(response);
-      } catch (e: any) {
-        const errorMessage = e.message || 'Ocurrió un error al calcular la integral. Revisa la función y los límites.';
+      
+      const response = await calculateIntegral(data);
+      
+      if (response && 'error' in response) {
+        const errorMessage = (response as any).error || 'Ocurrió un error al calcular la integral. Revisa la función y los límites.';
         setError(errorMessage);
         toast({
           variant: 'destructive',
           title: 'Error de Cálculo',
           description: errorMessage,
         });
-        console.error(e);
+        console.error(errorMessage);
+        return;
+      }
+      
+      if (response) {
+        setResult(response);
       }
     });
   };

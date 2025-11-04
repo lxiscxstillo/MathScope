@@ -54,14 +54,12 @@ function MarkdownRenderer({ content }: { content: string }) {
         code({ node, inline, className, children, ...props }) {
           const match = /language-(\w+)/.exec(className || '');
           if (inline) {
-            // Es una fórmula inline (ej. $...$)
             return <InlineMath math={String(children)} />;
-          } else if (match) {
-             // Es un bloque de fórmula (ej. ```math...```)
+          }
+          if (match) {
             return <BlockMath math={String(children).replace(/\n$/, '')} />;
           }
-          // Es un bloque de código normal
-          return <code className={className} {...props}>{children}</code>;
+          return <div className="my-2"><BlockMath math={String(children).replace(/\n$/, '')} /></div>;
         },
       }}
     >
@@ -89,21 +87,23 @@ export function FormulaExplainer() {
     startTransition(async () => {
       setError(null);
       setExplanation(null);
-      try {
-        const result = await explainFormula(data);
-        if ('error' in result) {
-          throw new Error((result as any).error);
-        }
-        setExplanation(result.explanation);
-      } catch (e: any) {
-        const errorMessage = e.message || 'Ocurrió un error al obtener la explicación. Por favor, intenta de nuevo.';
+      
+      const result = await explainFormula(data);
+      
+      if (result && 'error' in result) {
+        const errorMessage = (result as any).error || 'Ocurrió un error al obtener la explicación. Por favor, intenta de nuevo.';
         setError(errorMessage);
         toast({
           variant: 'destructive',
           title: 'Error de Explicación',
           description: errorMessage,
         });
-        console.error(e);
+        console.error(errorMessage);
+        return;
+      }
+      
+      if (result) {
+        setExplanation(result.explanation);
       }
     });
   };

@@ -40,10 +40,11 @@ function MarkdownRenderer({ content }: { content: string }) {
           const match = /language-(\w+)/.exec(className || '');
           if (inline) {
             return <InlineMath math={String(children)} />;
-          } else if (match) {
+          }
+          if (match) {
             return <div className="my-4"><BlockMath math={String(children).replace(/\n$/, '')} /></div>;
           }
-          return <code className={className} {...props}>{children}</code>;
+          return <div className="my-4"><BlockMath math={String(children).replace(/\n$/, '')} /></div>;
         },
       }}
     >
@@ -112,22 +113,23 @@ export function FunctionInputSection() {
     startTransition(async () => {
       setAnalysisResult(null);
       setAnalysisError(null);
-      try {
-        const result = await analyzeFunction({ func: data.func });
-        if ('error' in result) {
-          throw new Error((result as any).error);
-        }
-        setAnalysisResult(result);
-        dispatch({ type: 'SET_ANALYSIS_RESULT', payload: result });
-      } catch (error: any) {
-        console.error(error);
-        const errorMessage = error.message || 'No se pudo analizar la función. Revisa la sintaxis.';
+      
+      const result = await analyzeFunction({ func: data.func });
+      
+      if (result && 'error' in result) {
+        const errorMessage = (result as any).error || 'No se pudo analizar la función. Revisa la sintaxis.';
         setAnalysisError(errorMessage);
         toast({
           variant: 'destructive',
           title: 'Error de Análisis',
           description: errorMessage,
         });
+        return;
+      }
+
+      if(result) {
+        setAnalysisResult(result);
+        dispatch({ type: 'SET_ANALYSIS_RESULT', payload: result });
       }
     });
   }

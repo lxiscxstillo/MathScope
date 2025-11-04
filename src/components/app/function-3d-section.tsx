@@ -39,14 +39,12 @@ function MarkdownRenderer({ content }: { content: string }) {
         code({ node, inline, className, children, ...props }) {
           const match = /language-(\w+)/.exec(className || '');
           if (inline) {
-            // Es una fórmula inline (ej. $...$)
             return <InlineMath math={String(children)} />;
-          } else if (match) {
-             // Es un bloque de fórmula (ej. ```math...```)
+          }
+          if (match) {
             return <BlockMath math={String(children).replace(/\n$/, '')} />;
           }
-          // Es un bloque de código normal
-          return <code className={className} {...props}>{children}</code>;
+          return <div className="my-2"><BlockMath math={String(children).replace(/\n$/, '')} /></div>;
         },
       }}
     >
@@ -108,10 +106,20 @@ export function Function3DSection({ setFunc3D }: Function3DSectionProps) {
     setAnalysisResult(null);
 
     startAiTransition(async () => {
-      try {
-        const result = await convertNaturalTo3DFunction({ description: data.func });
-        if ('error' in result) throw new Error((result as any).error);
+      const result = await convertNaturalTo3DFunction({ description: data.func });
+      if (result && 'error' in result) {
+        toast({
+          title: 'Error de IA',
+          description: (result as any).error || `No se pudo interpretar la descripción.`,
+          variant: 'destructive'
+        });
+        if (isValid) {
+          setFunc3D(data.func);
+        }
+        return;
+      }
         
+      if (result) {
         const aiFunc = result.func;
         
         form.setValue('func', aiFunc, { shouldValidate: true });
@@ -123,30 +131,17 @@ export function Function3DSection({ setFunc3D }: Function3DSectionProps) {
 
         // Now, get the explanation for the generated function
         startExplanationTransition(async () => {
-           try {
-             const explanationResult = await explainFormula({ formula: aiFunc, language: 'Español' });
-             if ('error' in explanationResult) throw new Error((explanationResult as any).error);
-             setExplanation(explanationResult.explanation);
-           } catch (e: any) {
-             console.error("Error fetching explanation:", e);
-             toast({
-                title: 'Error de Explicación (IA)',
-                description: e.message || "No se pudo generar una explicación para esta fórmula.",
-                variant: 'destructive'
+          const explanationResult = await explainFormula({ formula: aiFunc, language: 'Español' });
+          if (explanationResult && 'error' in explanationResult) {
+            toast({
+              title: 'Error de Explicación (IA)',
+              description: (explanationResult as any).error || "No se pudo generar una explicación para esta fórmula.",
+              variant: 'destructive'
             });
-           }
+          } else if (explanationResult) {
+            setExplanation(explanationResult.explanation);
+          }
         });
-
-      } catch (error: any) {
-         console.error('Error con la IA, usando la entrada directa si es válida', error);
-         toast({
-            title: 'Error de IA',
-            description: error.message || `No se pudo interpretar la descripción.`,
-            variant: 'destructive'
-         });
-         if (isValid) {
-            setFunc3D(data.func);
-         }
       }
     });
   }
@@ -164,17 +159,15 @@ export function Function3DSection({ setFunc3D }: Function3DSectionProps) {
     
     startAnalysisTransition(async () => {
         setAnalysisResult(null);
-        try {
-            const result = await analyzeFunction3D({ func });
-            if ('error' in result) throw new Error((result as any).error);
-            setAnalysisResult(result);
-        } catch (error: any) {
-            console.error('Error al analizar la función 3D:', error);
+        const result = await analyzeFunction3D({ func });
+        if (result && 'error' in result) {
             toast({
                 title: 'Error de Análisis',
-                description: error.message || 'La IA no pudo procesar el análisis de la función.',
+                description: (result as any).error || 'La IA no pudo procesar el análisis de la función.',
                 variant: 'destructive'
             });
+        } else if (result) {
+            setAnalysisResult(result);
         }
     });
   }
