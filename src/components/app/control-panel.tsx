@@ -12,8 +12,7 @@ import { Function3DSection } from '@/components/app/function-3d-section';
 import { IntegrationSection } from '@/components/app/integration-section';
 import { OptimizationSection } from '@/components/app/optimization-section';
 import { HistorySection } from '@/components/app/history-section';
-import { FormulaExplainer } from '@/components/app/formula-explainer';
-import { SlidersHorizontal, FunctionSquare, History, Waypoints, HelpCircle } from 'lucide-react';
+import { SlidersHorizontal, FunctionSquare, History, Waypoints } from 'lucide-react';
 import { Plot3d } from '../icons';
 
 type ControlPanelProps = {
@@ -27,7 +26,7 @@ export function ControlPanel({ activeTab, setActiveTab, setFunc3D }: ControlPane
   return (
     <aside className="w-full max-w-md border-r border-border flex flex-col">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-        <TabsList className="m-2 grid w-auto grid-cols-6 shrink-0">
+        <TabsList className="m-2 grid w-auto grid-cols-5 shrink-0">
           <TabsTrigger value="function" className="h-auto py-2">
             <FunctionSquare className="w-5 h-5 mb-1" />
             <span className="text-xs">Función</span>
@@ -48,12 +47,8 @@ export function ControlPanel({ activeTab, setActiveTab, setFunc3D }: ControlPane
             <History className="w-5 h-5 mb-1" />
             <span className="text-xs">Historial</span>
           </TabsTrigger>
-          <TabsTrigger value="explain" className="h-auto py-2">
-            <HelpCircle className="w-5 h-5 mb-1" />
-            <span className="text-xs">Explicar</span>
-          </TabsTrigger>
         </TabsList>
-        <div className="flex-1 overflow-y-auto">
+        <ScrollArea className="flex-1">
           <div className="p-4 pt-0">
             <TabsContent value="function">
               <FunctionInputSection />
@@ -70,11 +65,8 @@ export function ControlPanel({ activeTab, setActiveTab, setFunc3D }: ControlPane
             <TabsContent value="history">
               <HistorySection />
             </TabsContent>
-            <TabsContent value="explain">
-              <FormulaExplainer />
-            </TabsContent>
           </div>
-        </div>
+        </ScrollArea>
       </Tabs>
     </aside>
   );

@@ -11,10 +11,8 @@ export function Header() {
   const { toast } = useToast();
 
   const handleDemoMode = () => {
-    // A more interesting function for 1D analysis
     const demoFunc = 'sin(x) / x';
     dispatch({ type: 'SET_FUNCTION', payload: demoFunc });
-    dispatch({ type: 'SET_GUIDED_MODE', payload: true });
     
     toast({
       title: 'Modo Demo Activado',

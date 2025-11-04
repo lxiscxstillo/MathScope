@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useTransition, useEffect } from 'react';
+import { useState, useTransition } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { calculateIntegral, IntegralOutput } from '@/ai/flows/integral-calculation';
+import * as math from 'mathjs';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,16 +17,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Calculator, BrainCircuit } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
-import remarkMath from 'remark-math';
-import 'katex/dist/katex.min.css';
-import { BlockMath, InlineMath } from 'react-katex';
+import { Calculator } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-
 
 const FormSchema = z.object({
   func: z.string().min(1, 'La función es obligatoria.'),
@@ -51,33 +43,9 @@ const FormSchema = z.object({
 
 type FormValues = z.infer<typeof FormSchema>;
 
-// Componente para renderizar Markdown con soporte para LaTeX
-function MarkdownRenderer({ content }: { content: string }) {
-  return (
-    <ReactMarkdown
-      remarkPlugins={[remarkMath]}
-      components={{
-        p: ({ node, ...props }) => <div className="mb-2" {...props} />,
-        code({ node, inline, className, children, ...props }) {
-          const match = /language-(\w+)/.exec(className || '');
-          if (inline) {
-            return <InlineMath math={String(children)} />;
-          }
-          if (match) {
-            return <BlockMath math={String(children).replace(/\n$/, '')} />;
-          }
-          return <div className="my-2"><BlockMath math={String(children).replace(/\n$/, '')} /></div>;
-        },
-      }}
-    >
-      {content}
-    </ReactMarkdown>
-  );
-}
-
 export function IntegrationSection() {
   const [isPending, startTransition] = useTransition();
-  const [result, setResult] = useState<IntegralOutput | null>(null);
+  const [result, setResult] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -99,27 +67,61 @@ export function IntegrationSection() {
   
   const integralType = form.watch('integralType');
 
+  // Basic numerical integration (Simpson's rule)
+  const integrate = (fn: (x: number) => number, a: number, b: number, n: number = 100) => {
+    const h = (b - a) / n;
+    let sum = fn(a) + fn(b);
+    for (let i = 1; i < n; i += 2) {
+      sum += 4 * fn(a + i * h);
+    }
+    for (let i = 2; i < n - 1; i += 2) {
+      sum += 2 * fn(a + i * h);
+    }
+    return (sum * h) / 3;
+  };
+
   const onSubmit: SubmitHandler<FormValues> = (data) => {
-    startTransition(async () => {
+    startTransition(() => {
       setError(null);
       setResult(null);
       
-      const response = await calculateIntegral(data);
-      
-      if (response && 'error' in response) {
-        const errorMessage = (response as any).error || 'Ocurrió un error al calcular la integral. Revisa la función y los límites.';
+      try {
+        const fn = math.parse(data.func).compile();
+        
+        const x_min = parseFloat(data.limits.x_min);
+        const x_max = parseFloat(data.limits.x_max);
+        const y_min = parseFloat(data.limits.y_min);
+        const y_max = parseFloat(data.limits.y_max);
+        
+        if ([x_min, x_max, y_min, y_max].some(isNaN)) {
+          throw new Error("Los límites deben ser números válidos.");
+        }
+
+        let integralResult: number;
+
+        if (data.integralType === 'double') {
+          const innerIntegral = (y: number) => integrate(x => fn.evaluate({ x, y }), x_min, x_max);
+          integralResult = integrate(innerIntegral, y_min, y_max);
+        } else { // Triple integral
+          const z_min = parseFloat(data.limits.z_min || '0');
+          const z_max = parseFloat(data.limits.z_max || '0');
+          if ([z_min, z_max].some(isNaN)) {
+            throw new Error("Los límites de Z deben ser números válidos.");
+          }
+          const innerMostIntegral = (y:number, z:number) => integrate(x => fn.evaluate({x, y, z}), x_min, x_max);
+          const middleIntegral = (z: number) => integrate(y => innerMostIntegral(y, z), y_min, y_max);
+          integralResult = integrate(middleIntegral, z_min, z_max);
+        }
+
+        setResult(integralResult);
+      } catch (e: any) {
+        const errorMessage = e.message || 'Error al calcular. Revisa la función y los límites.';
         setError(errorMessage);
         toast({
           variant: 'destructive',
           title: 'Error de Cálculo',
           description: errorMessage,
         });
-        console.error(errorMessage);
-        return;
-      }
-      
-      if (response) {
-        setResult(response);
       }
     });
   };
@@ -128,9 +130,9 @@ export function IntegrationSection() {
     <div className="space-y-6">
     <Card>
       <CardHeader>
-        <CardTitle>Integración Múltiple</CardTitle>
+        <CardTitle>Integración Múltiple (Numérica)</CardTitle>
         <CardDescription>
-          Calcula integrales dobles y triples para una función.
+          Calcula integrales dobles y triples usando métodos numéricos.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -199,16 +201,8 @@ export function IntegrationSection() {
     {isPending && (
         <Card>
             <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <BrainCircuit className="w-6 h-6 animate-pulse text-primary" />
-                    Calculando con IA...
-                </CardTitle>
+                <CardTitle>Calculando...</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-                <Skeleton className="h-8 w-1/2" />
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-4 w-full" />
-            </CardContent>
         </Card>
     )}
 
@@ -219,31 +213,21 @@ export function IntegrationSection() {
         </Card>
     )}
 
-    {result && (
+    {result !== null && (
         <Card className="bg-secondary/50">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <Calculator className="w-6 h-6 text-primary" />
-                    Resultado de la Integral
+                    Resultado (Aproximado)
                 </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
                 <div>
-                    <p className="text-3xl font-bold font-code text-center text-primary">{result.result.toFixed(4)}</p>
+                    <p className="text-3xl font-bold font-code text-center text-primary">{result.toFixed(4)}</p>
                     <p className="text-center text-muted-foreground text-sm mt-1">
                         {integralType === 'double' ? 'Volumen bajo la superficie' : 'Hipervolumen calculado'}
                     </p>
                 </div>
-                 <Accordion type="single" collapsible className="w-full">
-                    <AccordionItem value="steps">
-                    <AccordionTrigger className="text-sm">Ver Pasos del Cálculo</AccordionTrigger>
-                    <AccordionContent>
-                        <ScrollArea className="h-96 w-full rounded-md border p-4 whitespace-nowrap">
-                            <MarkdownRenderer content={result.calculationSteps} />
-                        </ScrollArea>
-                    </AccordionContent>
-                    </AccordionItem>
-                </Accordion>
             </CardContent>
         </Card>
     )}
