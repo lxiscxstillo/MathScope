@@ -82,9 +82,9 @@ export function OptimizationSection() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Optimización con Restricciones</CardTitle>
+          <CardTitle>Multiplicadores de Lagrange</CardTitle>
           <CardDescription>
-            Encuentra puntos óptimos usando multiplicadores de Lagrange con IA.
+            Encuentra los máximos y mínimos de una función `f(x, y)` sujeta a una restricción `g(x, y) = 0`.
           </CardDescription>
         </CardHeader>
         <CardContent>
