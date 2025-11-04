@@ -1,11 +1,8 @@
 'use client';
 import React, { useRef, useEffect, useState, useMemo } from 'react';
 import * as math from 'mathjs';
-import * as d3 from 'd3-zoom';
-import { select } from 'd3-selection';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 
 type Point3D = [number, number, number];
 type Point2D = [number, number];
@@ -13,26 +10,51 @@ type Point2D = [number, number];
 export function VisualizationPanel3D({ funcStr }: { funcStr: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
 
   const [angles, setAngles] = useState({ x: -0.5, y: 0.5, z: 0 });
   const [zoom, setZoom] = useState(25);
   const dragStart = useRef<{ x: number; y: number; angles: typeof angles } | null>(null);
 
-  const parsedFunc = useMemo(() => {
+  const { parsedFunc, data, zRange } = useMemo(() => {
     if (!funcStr) {
       setError(null);
-      return null;
+      return { parsedFunc: null, data: [], zRange: { min: -5, max: 5 } };
     }
     try {
       const node = math.parse(funcStr);
       const compiled = node.compile();
-      compiled.evaluate({ x: 1, y: 1 });
+      compiled.evaluate({ x: 1, y: 1 }); // Test evaluation
       setError(null);
-      return compiled;
+
+      const step = 0.5;
+      const range = 10;
+      const points: Point3D[] = [];
+      let minZ = Infinity;
+      let maxZ = -Infinity;
+
+      for (let x = -range; x <= range; x += step) {
+        for (let y = -range; y <= range; y += step) {
+          try {
+            const z = compiled.evaluate({ x, y });
+            if (isFinite(z)) {
+              points.push([x, y, z]);
+              if (z < minZ) minZ = z;
+              if (z > maxZ) maxZ = z;
+            } else {
+              points.push([x, y, NaN]);
+            }
+          } catch (e) {
+            points.push([x, y, NaN]);
+          }
+        }
+      }
+      
+      const finalZRange = isFinite(minZ) && isFinite(maxZ) ? { min: Math.floor(minZ), max: Math.ceil(maxZ) } : { min: -5, max: 5 };
+
+      return { parsedFunc: compiled, data: points, zRange: finalZRange };
     } catch (e: any) {
       setError(`Error en la función: ${e.message}`);
-      return null;
+      return { parsedFunc: null, data: [], zRange: { min: -5, max: 5 } };
     }
   }, [funcStr]);
 
@@ -85,7 +107,7 @@ export function VisualizationPanel3D({ funcStr }: { funcStr: string }) {
     
     const handleWheel = (event: WheelEvent) => {
       event.preventDefault();
-      setZoom(z => Math.max(5, Math.min(100, z - event.deltaY * 0.01)));
+      setZoom(z => Math.max(5, Math.min(100, z - event.deltaY * 0.05)));
     };
 
     canvas.addEventListener('mousedown', handleMouseDown);
@@ -113,16 +135,16 @@ export function VisualizationPanel3D({ funcStr }: { funcStr: string }) {
     context.clearRect(0, 0, width, height);
     context.translate(width / 2, height / 2);
 
-    const step = 0.5;
     const range = 10;
     
     // Draw axes
     context.strokeStyle = 'hsl(var(--muted-foreground))';
     context.lineWidth = 1;
     const axisLength = range * 1.2;
+    const zAxisLength = Math.max(Math.abs(zRange.min), Math.abs(zRange.max), range) * 1.1;
     const xAxis: [Point3D, Point3D] = [[-axisLength, 0, 0], [axisLength, 0, 0]];
     const yAxis: [Point3D, Point3D] = [[0, -axisLength, 0], [0, axisLength, 0]];
-    const zAxis: [Point3D, Point3D] = [[0, 0, -axisLength], [0, 0, axisLength]];
+    const zAxis: [Point3D, Point3D] = [[0, 0, -zAxisLength], [0, 0, zAxisLength]];
     
     [xAxis, yAxis, zAxis].forEach((axis, i) => {
         context.beginPath();
@@ -131,7 +153,7 @@ export function VisualizationPanel3D({ funcStr }: { funcStr: string }) {
         context.moveTo(p1[0], p1[1]);
         context.lineTo(p2[0], p2[1]);
         context.stroke();
-        context.fillStyle = ['hsl(var(--foreground))', 'hsl(var(--foreground))', 'hsl(var(--foreground))'][i];
+        context.fillStyle = 'hsl(var(--foreground))';
         context.font = '14px Inter';
         const labelPos = project([axis[1][0]*1.1, axis[1][1]*1.1, axis[1][2]*1.1]);
         context.fillText(['x','y','z'][i], labelPos[0], labelPos[1]);
@@ -154,66 +176,68 @@ export function VisualizationPanel3D({ funcStr }: { funcStr: string }) {
         // Y-axis ticks
         const yTickPos = project([0, i, 0]);
         context.fillText(i.toString(), yTickPos[0], yTickPos[1] + 10);
-        
-        // Z-axis ticks
-        const zTickPos = project([0, 0, i]);
-        context.fillText(i.toString(), zTickPos[0], zTickPos[1] + 10);
+    }
+    
+    const zTickCount = 5;
+    const zTickStep = (zRange.max - zRange.min) / zTickCount;
+    for(let i = 0; i <= zTickCount; i++) {
+        const zVal = zRange.min + i * zTickStep;
+        if (Math.abs(zVal) < 1e-9) continue;
+        const zTickPos = project([0, 0, zVal]);
+        context.fillText(zVal.toFixed(1), zTickPos[0] + 15, zTickPos[1]);
     }
 
 
     if (parsedFunc && !error) {
+      const pointsPerLine = 2 * range / 0.5 + 1;
+
       context.strokeStyle = 'hsl(var(--primary))';
       context.lineWidth = 0.5;
-      for (let x = -range; x <= range; x += step) {
+
+      // Draw lines along x-axis
+      for (let i = 0; i < pointsPerLine; i++) {
         context.beginPath();
         let first = true;
-        for (let y = -range; y <= range; y += step) {
-          try {
-            const z = parsedFunc.evaluate({ x, y });
-            if (isFinite(z)) {
-              const p2d = project([x, y, z]);
-              if (first) {
-                context.moveTo(p2d[0], p2d[1]);
-                first = false;
-              } else {
-                context.lineTo(p2d[0], p2d[1]);
-              }
+        for (let j = 0; j < pointsPerLine; j++) {
+            const p = data[j * pointsPerLine + i];
+            if (p && !isNaN(p[2])) {
+                const p2d = project(p);
+                if (first) {
+                    context.moveTo(p2d[0], p2d[1]);
+                    first = false;
+                } else {
+                    context.lineTo(p2d[0], p2d[1]);
+                }
             } else {
-              first = true;
+                first = true;
             }
-          } catch (e) {
-            first = true;
-          }
         }
         context.stroke();
       }
 
-      for (let y = -range; y <= range; y += step) {
+      // Draw lines along y-axis
+      for (let j = 0; j < pointsPerLine; j++) {
         context.beginPath();
         let first = true;
-        for (let x = -range; x <= range; x += step) {
-          try {
-            const z = parsedFunc.evaluate({ x, y });
-            if (isFinite(z)) {
-              const p2d = project([x, y, z]);
-              if (first) {
-                context.moveTo(p2d[0], p2d[1]);
-                first = false;
-              } else {
-                context.lineTo(p2d[0], p2d[1]);
-              }
+        for (let i = 0; i < pointsPerLine; i++) {
+             const p = data[j * pointsPerLine + i];
+            if (p && !isNaN(p[2])) {
+                const p2d = project(p);
+                if (first) {
+                    context.moveTo(p2d[0], p2d[1]);
+                    first = false;
+                } else {
+                    context.lineTo(p2d[0], p2d[1]);
+                }
             } else {
-              first = true;
+                first = true;
             }
-          } catch (e) {
-            first = true;
-          }
         }
         context.stroke();
       }
     }
 
-  }, [funcStr, parsedFunc, error, angles, zoom]);
+  }, [funcStr, parsedFunc, data, zRange, error, angles, zoom]);
 
   return (
     <div id="visualization-panel" className="flex-1 flex flex-col p-4 bg-muted/30">
