@@ -25,7 +25,7 @@ type ControlPanelProps = {
 export function ControlPanel({ activeTab, setActiveTab, setFunc3D }: ControlPanelProps) {
   return (
     <aside className="w-full max-w-md border-r border-border flex flex-col">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
         <TabsList className="m-2 grid w-auto grid-cols-5 shrink-0">
           <TabsTrigger value="function" className="h-auto py-2">
             <FunctionSquare className="w-5 h-5 mb-1" />

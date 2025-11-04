@@ -14,7 +14,7 @@ export default function Home() {
     <AppStateProvider>
       <div className="flex flex-col h-screen bg-background font-body">
         <Header />
-        <main className="flex flex-1 overflow-hidden">
+        <main className="flex flex-1">
           <ControlPanel 
             activeTab={activeTab}
             setActiveTab={setActiveTab}
