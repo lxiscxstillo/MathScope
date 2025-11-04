@@ -32,7 +32,7 @@ function MarkdownRenderer({ content }: { content: string }) {
         <ReactMarkdown
         remarkPlugins={[remarkMath]}
         components={{
-            p: (props) => <div className="mb-2" {...props} />,
+            p: ({ node, ...props }) => <div className="mb-2" {...props} />,
             h1: ({ node, ...props }) => <h1 className="text-xl font-bold my-4" {...props} />,
             h2: ({ node, ...props }) => <h2 className="text-lg font-semibold my-3" {...props} />,
             ul: ({ node, ...props }) => <ul className="list-disc pl-5 mb-2" {...props} />,
@@ -41,11 +41,13 @@ function MarkdownRenderer({ content }: { content: string }) {
             code({ node, inline, className, children, ...props }) {
                 const match = /language-(\w+)/.exec(className || '');
                 if (inline) {
+                    // Es una fórmula inline (ej. $...$)
                     return <InlineMath math={String(children)} />;
+                } else if (match) {
+                   // Es un bloque de fórmula (ej. ```math...```)
+                  return <BlockMath math={String(children).replace(/\n$/, '')} />;
                 }
-                if (match) {
-                    return <BlockMath math={String(children).replace(/\n$/, '')} />;
-                }
+                // Es un bloque de código normal
                 return <code className={className} {...props}>{children}</code>;
             },
         }}

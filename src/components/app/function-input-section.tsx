@@ -34,14 +34,13 @@ function MarkdownRenderer({ content }: { content: string }) {
     <ReactMarkdown
       remarkPlugins={[remarkMath]}
       components={{
-        p: (props) => <div className="mb-4" {...props} />,
+        p: ({ node, ...props }) => <div className="mb-4" {...props} />,
         h3: ({ node, ...props }) => <h3 className="font-semibold text-primary mb-2" {...props} />,
         code({ node, inline, className, children, ...props }) {
           const match = /language-(\w+)/.exec(className || '');
           if (inline) {
             return <InlineMath math={String(children)} />;
-          }
-          if (match) {
+          } else if (match) {
             return <div className="my-4"><BlockMath math={String(children).replace(/\n$/, '')} /></div>;
           }
           return <code className={className} {...props}>{children}</code>;
