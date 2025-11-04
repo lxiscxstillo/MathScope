@@ -125,27 +125,25 @@ export function Function3DSection({ setFunc3D }: Function3DSectionProps) {
              const explanationResult = await explainFormula({ formula: aiFunc, language: 'Español' });
              if ('error' in explanationResult) throw new Error((explanationResult as any).error);
              setExplanation(explanationResult.explanation);
-           } catch (e) {
+           } catch (e: any) {
              console.error("Error fetching explanation:", e);
-             setExplanation("No se pudo generar una explicación para esta fórmula.");
+             toast({
+                title: 'Error de Explicación (IA)',
+                description: e.message || "No se pudo generar una explicación para esta fórmula.",
+                variant: 'destructive'
+            });
            }
         });
 
       } catch (error: any) {
          console.error('Error con la IA, usando la entrada directa si es válida', error);
+         toast({
+            title: 'Error de IA',
+            description: error.message || `No se pudo interpretar la descripción.`,
+            variant: 'destructive'
+         });
          if (isValid) {
             setFunc3D(data.func);
-            toast({
-                title: 'Error de IA',
-                description: error.message || `No se pudo interpretar. Graficando entrada directa: z = ${data.func}`,
-                variant: 'destructive'
-            });
-         } else {
-             toast({
-                title: 'Error',
-                description: `La función o descripción no es válida.`,
-                variant: 'destructive'
-            });
          }
       }
     });

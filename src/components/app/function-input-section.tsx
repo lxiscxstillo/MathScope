@@ -122,11 +122,12 @@ export function FunctionInputSection() {
         dispatch({ type: 'SET_ANALYSIS_RESULT', payload: result });
       } catch (error: any) {
         console.error(error);
-        setAnalysisError(error.message || 'No se pudo analizar la función. Revisa la sintaxis.');
+        const errorMessage = error.message || 'No se pudo analizar la función. Revisa la sintaxis.';
+        setAnalysisError(errorMessage);
         toast({
           variant: 'destructive',
           title: 'Error de Análisis',
-          description: error.message || 'La IA no pudo procesar la función.',
+          description: errorMessage,
         });
       }
     });

@@ -25,6 +25,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import 'katex/dist/katex.min.css';
 import { BlockMath, InlineMath } from 'react-katex';
+import { useToast } from '@/hooks/use-toast';
 
 
 const FormSchema = z.object({
@@ -78,6 +79,7 @@ export function IntegrationSection() {
   const [isPending, startTransition] = useTransition();
   const [result, setResult] = useState<IntegralOutput | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(FormSchema),
@@ -106,7 +108,13 @@ export function IntegrationSection() {
         if ('error' in response) throw new Error((response as any).error);
         setResult(response);
       } catch (e: any) {
-        setError(e.message || 'Ocurrió un error al calcular la integral. Revisa la función y los límites.');
+        const errorMessage = e.message || 'Ocurrió un error al calcular la integral. Revisa la función y los límites.';
+        setError(errorMessage);
+        toast({
+          variant: 'destructive',
+          title: 'Error de Cálculo',
+          description: errorMessage,
+        });
         console.error(e);
       }
     });
@@ -200,7 +208,7 @@ export function IntegrationSection() {
         </Card>
     )}
 
-    {error && (
+    {error && !isPending && (
         <Card className="border-destructive">
             <CardHeader><CardTitle className="text-destructive">Error</CardTitle></CardHeader>
             <CardContent><p>{error}</p></CardContent>

@@ -35,6 +35,7 @@ import { ScrollArea } from '../ui/scroll-area';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import { BlockMath, InlineMath } from 'react-katex';
+import { useToast } from '@/hooks/use-toast';
 
 const FormSchema = z.object({
   formula: z.string().min(1, 'Por favor, introduce una fórmula.'),
@@ -49,7 +50,7 @@ function MarkdownRenderer({ content }: { content: string }) {
     <ReactMarkdown
       remarkPlugins={[remarkMath]}
       components={{
-        p: (props) => <div className="mb-2" {...props} />,
+        p: ({ node, ...props }) => <div className="mb-2" {...props} />,
         code({ node, inline, className, children, ...props }) {
           const match = /language-(\w+)/.exec(className || '');
           if (inline) {
@@ -72,6 +73,7 @@ export function FormulaExplainer() {
   const [isPending, startTransition] = useTransition();
   const [explanation, setExplanation] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(FormSchema),
@@ -92,7 +94,13 @@ export function FormulaExplainer() {
         }
         setExplanation(result.explanation);
       } catch (e: any) {
-        setError(e.message || 'Ocurrió un error al obtener la explicación. Por favor, intenta de nuevo.');
+        const errorMessage = e.message || 'Ocurrió un error al obtener la explicación. Por favor, intenta de nuevo.';
+        setError(errorMessage);
+        toast({
+          variant: 'destructive',
+          title: 'Error de Explicación',
+          description: errorMessage,
+        });
         console.error(e);
       }
     });
@@ -175,7 +183,7 @@ export function FormulaExplainer() {
         </Card>
       )}
 
-      {error && (
+      {error && !isPending && (
         <Card className="border-destructive">
           <CardHeader>
             <CardTitle className="text-destructive">Error</CardTitle>
