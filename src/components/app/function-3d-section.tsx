@@ -18,10 +18,11 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { convertNaturalTo3DFunction } from '@/ai/flows/natural-to-3d-function';
 import { explainFormula } from '@/ai/flows/formula-explanation';
+import { analyzeFunction3D, FunctionAnalysis3DOutput } from '@/ai/flows/function-analysis-3d';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { BrainCircuit, Lightbulb } from 'lucide-react';
+import { BrainCircuit, Lightbulb, Calculator } from 'lucide-react';
 
 
 const FormSchema = z.object({
@@ -57,6 +58,8 @@ export function Function3DSection({ setFunc3D }: Function3DSectionProps) {
   const [isAiPending, startAiTransition] = useTransition();
   const [explanation, setExplanation] = useState<string | null>(null);
   const [isExplanationPending, startExplanationTransition] = useTransition();
+  const [analysisResult, setAnalysisResult] = useState<FunctionAnalysis3DOutput | null>(null);
+  const [isAnalysisPending, startAnalysisTransition] = useTransition();
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -90,11 +93,13 @@ export function Function3DSection({ setFunc3D }: Function3DSectionProps) {
   const handleFunctionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     form.setValue('func', value, { shouldValidate: true });
+    setAnalysisResult(null); // Reset analysis on function change
     debouncedValidate(value);
   };
 
   function onSubmitWithAI(data: z.infer<typeof FormSchema>) {
     setExplanation(null);
+    setAnalysisResult(null);
 
     startAiTransition(async () => {
       try {
@@ -139,7 +144,35 @@ export function Function3DSection({ setFunc3D }: Function3DSectionProps) {
     });
   }
 
+  function handleAnalysis() {
+    const func = form.getValues('func');
+    if (!isValid || !func) {
+        toast({
+            title: 'Función no válida',
+            description: 'Por favor, introduce una función matemática válida para analizar.',
+            variant: 'destructive'
+        });
+        return;
+    }
+    
+    startAnalysisTransition(async () => {
+        setAnalysisResult(null);
+        try {
+            const result = await analyzeFunction3D({ func });
+            setAnalysisResult(result);
+        } catch (error) {
+            console.error('Error al analizar la función 3D:', error);
+            toast({
+                title: 'Error de Análisis',
+                description: 'La IA no pudo procesar el análisis de la función.',
+                variant: 'destructive'
+            });
+        }
+    });
+  }
+
   return (
+    <div className="space-y-6">
     <Card>
       <CardHeader>
         <CardTitle>Análisis de Función 3D</CardTitle>
@@ -147,7 +180,7 @@ export function Function3DSection({ setFunc3D }: Function3DSectionProps) {
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmitWithAI)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmitWithAI)} className="space-y-4">
             <FormField
               control={form.control}
               name="func"
@@ -168,16 +201,28 @@ export function Function3DSection({ setFunc3D }: Function3DSectionProps) {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full" disabled={isAiPending || isExplanationPending}>
-              {isAiPending || isExplanationPending ? (
-                <>
-                  <BrainCircuit className="mr-2 h-4 w-4 animate-pulse" />
-                  Interpretando con IA...
-                </>
-              ) : (
-                'Interpretar y Explicar con IA'
-              )}
-            </Button>
+            <div className="space-y-2">
+              <Button type="submit" className="w-full" disabled={isAiPending || isExplanationPending}>
+                {isAiPending || isExplanationPending ? (
+                  <>
+                    <BrainCircuit className="mr-2 h-4 w-4 animate-pulse" />
+                    Interpretando...
+                  </>
+                ) : (
+                  'Interpretar y Explicar con IA'
+                )}
+              </Button>
+               <Button type="button" variant="secondary" onClick={handleAnalysis} className="w-full" disabled={isAnalysisPending || !isValid}>
+                {isAnalysisPending ? (
+                  <>
+                    <Calculator className="mr-2 h-4 w-4 animate-pulse" />
+                    Analizando...
+                  </>
+                ) : (
+                  'Analizar Función'
+                )}
+              </Button>
+            </div>
           </form>
         </Form>
         
@@ -211,5 +256,57 @@ export function Function3DSection({ setFunc3D }: Function3DSectionProps) {
 
       </CardContent>
     </Card>
+
+    {(isAnalysisPending || analysisResult) && (
+      <Card>
+        <CardHeader>
+           <CardTitle className="flex items-center gap-2">
+            <Calculator className="w-5 h-5 text-primary" />
+            Análisis de la Función
+            </CardTitle>
+        </CardHeader>
+        <CardContent>
+             <Accordion type="single" collapsible className="w-full" defaultValue='item-1'>
+                <AccordionItem value="item-1">
+                  <AccordionTrigger>Dominio y Rango (Estimado)</AccordionTrigger>
+                  <AccordionContent className="font-code text-sm space-y-2">
+                    {isAnalysisPending ? (
+                      <>
+                        <Skeleton className="h-4 w-3/4" />
+                        <Skeleton className="h-4 w-2/4" />
+                      </>
+                    ) : analysisResult ? (
+                      <>
+                        <p>Dominio: {analysisResult.domain}</p>
+                        <p>Rango Z: {analysisResult.range}</p>
+                      </>
+                    ) : null}
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="item-2">
+                  <AccordionTrigger>Derivadas Parciales</AccordionTrigger>
+                  <AccordionContent className="text-sm space-y-3">
+                     {isAnalysisPending ? (
+                      <div className="space-y-3">
+                        <Skeleton className="h-6 w-full" />
+                        <Skeleton className="h-6 w-full" />
+                        <Skeleton className="h-6 w-full" />
+                        <Skeleton className="h-6 w-full" />
+                      </div>
+                    ) : analysisResult ? (
+                      <div className="font-code space-y-3">
+                        <p className='flex items-center gap-2'><span>∂z/∂x =</span> <InlineMath math={analysisResult.firstPartialX} /></p>
+                        <p className='flex items-center gap-2'><span>∂z/∂y =</span> <InlineMath math={analysisResult.firstPartialY} /></p>
+                        <p className='flex items-center gap-2'><span>∂²z/∂x² =</span> <InlineMath math={analysisResult.secondPartialX} /></p>
+                        <p className='flex items-center gap-2'><span>∂²z/∂y² =</span> <InlineMath math={analysisResult.secondPartialY} /></p>
+                      </div>
+                    ) : null}
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+        </CardContent>
+      </Card>
+    )}
+    </div>
   );
 }
