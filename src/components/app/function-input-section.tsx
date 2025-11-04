@@ -34,14 +34,17 @@ function MarkdownRenderer({ content }: { content: string }) {
     <ReactMarkdown
       remarkPlugins={[remarkMath]}
       components={{
-        p: ({ node, ...props }) => <p className="mb-4" {...props} />,
+        p: (props) => <div className="mb-4" {...props} />,
         h3: ({ node, ...props }) => <h3 className="font-semibold text-primary mb-2" {...props} />,
         code({ node, inline, className, children, ...props }) {
           const match = /language-(\w+)/.exec(className || '');
           if (inline) {
             return <InlineMath math={String(children)} />;
           }
-          return <div className="my-4"><BlockMath math={String(children)} /></div>;
+          if (match) {
+            return <div className="my-4"><BlockMath math={String(children).replace(/\n$/, '')} /></div>;
+          }
+          return <code className={className} {...props}>{children}</code>;
         },
       }}
     >
@@ -112,15 +115,18 @@ export function FunctionInputSection() {
       setAnalysisError(null);
       try {
         const result = await analyzeFunction({ func: data.func });
+        if ('error' in result) {
+          throw new Error((result as any).error);
+        }
         setAnalysisResult(result);
         dispatch({ type: 'SET_ANALYSIS_RESULT', payload: result });
-      } catch (error) {
+      } catch (error: any) {
         console.error(error);
-        setAnalysisError('No se pudo analizar la función. Revisa la sintaxis.');
+        setAnalysisError(error.message || 'No se pudo analizar la función. Revisa la sintaxis.');
         toast({
           variant: 'destructive',
           title: 'Error de Análisis',
-          description: 'La IA no pudo procesar la función.',
+          description: error.message || 'La IA no pudo procesar la función.',
         });
       }
     });

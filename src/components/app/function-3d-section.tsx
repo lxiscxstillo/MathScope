@@ -35,12 +35,16 @@ function MarkdownRenderer({ content }: { content: string }) {
     <ReactMarkdown
       remarkPlugins={[remarkMath]}
       components={{
-        p: ({ node, ...props }) => <p className="mb-2" {...props} />,
+        p: (props) => <div className="mb-2" {...props} />,
         code({ node, inline, className, children, ...props }) {
+          const match = /language-(\w+)/.exec(className || '');
           if (inline) {
             return <InlineMath math={String(children)} />;
           }
-          return <BlockMath math={String(children)} />;
+          if (match) {
+            return <BlockMath math={String(children).replace(/\n$/, '')} />;
+          }
+          return <code className={className} {...props}>{children}</code>;
         },
       }}
     >
@@ -104,6 +108,8 @@ export function Function3DSection({ setFunc3D }: Function3DSectionProps) {
     startAiTransition(async () => {
       try {
         const result = await convertNaturalTo3DFunction({ description: data.func });
+        if ('error' in result) throw new Error((result as any).error);
+        
         const aiFunc = result.func;
         
         form.setValue('func', aiFunc, { shouldValidate: true });
@@ -117,6 +123,7 @@ export function Function3DSection({ setFunc3D }: Function3DSectionProps) {
         startExplanationTransition(async () => {
            try {
              const explanationResult = await explainFormula({ formula: aiFunc, language: 'Español' });
+             if ('error' in explanationResult) throw new Error((explanationResult as any).error);
              setExplanation(explanationResult.explanation);
            } catch (e) {
              console.error("Error fetching explanation:", e);
@@ -124,13 +131,13 @@ export function Function3DSection({ setFunc3D }: Function3DSectionProps) {
            }
         });
 
-      } catch (error) {
+      } catch (error: any) {
          console.error('Error con la IA, usando la entrada directa si es válida', error);
          if (isValid) {
             setFunc3D(data.func);
             toast({
                 title: 'Error de IA',
-                description: `No se pudo interpretar. Graficando entrada directa: z = ${data.func}`,
+                description: error.message || `No se pudo interpretar. Graficando entrada directa: z = ${data.func}`,
                 variant: 'destructive'
             });
          } else {
@@ -159,12 +166,13 @@ export function Function3DSection({ setFunc3D }: Function3DSectionProps) {
         setAnalysisResult(null);
         try {
             const result = await analyzeFunction3D({ func });
+            if ('error' in result) throw new Error((result as any).error);
             setAnalysisResult(result);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error al analizar la función 3D:', error);
             toast({
                 title: 'Error de Análisis',
-                description: 'La IA no pudo procesar el análisis de la función.',
+                description: error.message || 'La IA no pudo procesar el análisis de la función.',
                 variant: 'destructive'
             });
         }

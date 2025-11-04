@@ -56,12 +56,16 @@ function MarkdownRenderer({ content }: { content: string }) {
     <ReactMarkdown
       remarkPlugins={[remarkMath]}
       components={{
-        p: ({ node, ...props }) => <p className="mb-2" {...props} />,
+        p: (props) => <div className="mb-2" {...props} />,
         code({ node, inline, className, children, ...props }) {
+          const match = /language-(\w+)/.exec(className || '');
           if (inline) {
             return <InlineMath math={String(children)} />;
           }
-          return <BlockMath math={String(children)} />;
+          if (match) {
+            return <BlockMath math={String(children).replace(/\n$/, '')} />;
+          }
+          return <code className={className} {...props}>{children}</code>;
         },
       }}
     >
@@ -99,9 +103,10 @@ export function IntegrationSection() {
       setResult(null);
       try {
         const response = await calculateIntegral(data);
+        if ('error' in response) throw new Error((response as any).error);
         setResult(response);
-      } catch (e) {
-        setError('Ocurrió un error al calcular la integral. Revisa la función y los límites.');
+      } catch (e: any) {
+        setError(e.message || 'Ocurrió un error al calcular la integral. Revisa la función y los límites.');
         console.error(e);
       }
     });

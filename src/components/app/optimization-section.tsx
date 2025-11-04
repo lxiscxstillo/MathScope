@@ -31,17 +31,21 @@ function MarkdownRenderer({ content }: { content: string }) {
         <ReactMarkdown
         remarkPlugins={[remarkMath]}
         components={{
-            p: ({ node, ...props }) => <p className="mb-2" {...props} />,
+            p: (props) => <div className="mb-2" {...props} />,
             h1: ({ node, ...props }) => <h1 className="text-xl font-bold my-4" {...props} />,
             h2: ({ node, ...props }) => <h2 className="text-lg font-semibold my-3" {...props} />,
             ul: ({ node, ...props }) => <ul className="list-disc pl-5 mb-2" {...props} />,
             ol: ({ node, ...props }) => <ol className="list-decimal pl-5 mb-2" {...props} />,
             li: ({ node, ...props }) => <li className="mb-1" {...props} />,
             code({ node, inline, className, children, ...props }) {
-            if (inline) {
-                return <InlineMath math={String(children)} />;
-            }
-            return <BlockMath math={String(children)} />;
+                const match = /language-(\w+)/.exec(className || '');
+                if (inline) {
+                    return <InlineMath math={String(children)} />;
+                }
+                if (match) {
+                    return <BlockMath math={String(children).replace(/\n$/, '')} />;
+                }
+                return <code className={className} {...props}>{children}</code>;
             },
         }}
         >
@@ -70,9 +74,10 @@ export function OptimizationSection() {
       setResult(null);
       try {
         const response = await solveWithLagrange(data);
+        if ('error' in response) throw new Error((response as any).error);
         setResult(response);
-      } catch (e) {
-        setError('Ocurrió un error al resolver la optimización. Por favor, revisa las funciones e intenta de nuevo.');
+      } catch (e: any) {
+        setError(e.message || 'Ocurrió un error al resolver la optimización. Por favor, revisa las funciones e intenta de nuevo.');
         console.error(e);
       }
     });
