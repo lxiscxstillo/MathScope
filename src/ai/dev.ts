@@ -7,3 +7,4 @@ import '@/ai/flows/integral-calculation.ts';
 import '@/ai/flows/function-analysis.ts';
 import '@/ai/flows/function-analysis-3d.ts';
 import '@/ai/flows/natural-to-3d-function.ts';
+import '@/ai/flows/unconstrained-optimization.ts';
