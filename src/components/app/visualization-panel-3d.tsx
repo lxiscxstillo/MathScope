@@ -251,7 +251,7 @@ export function VisualizationPanel3D({ funcStr, gradFns }: VisualizationPanel3DP
 
       // Draw gradient field
       if (showGradient && gradFns) {
-        context.strokeStyle = 'hsl(var(--accent))';
+        context.strokeStyle = 'hsl(var(--destructive))';
         context.lineWidth = 1;
         const gradStep = 2; // draw fewer vectors than grid lines
 
