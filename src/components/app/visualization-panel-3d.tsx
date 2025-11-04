@@ -131,11 +131,34 @@ export function VisualizationPanel3D({ funcStr }: { funcStr: string }) {
         context.moveTo(p1[0], p1[1]);
         context.lineTo(p2[0], p2[1]);
         context.stroke();
-        context.fillStyle = ['red', 'green', 'blue'][i];
+        context.fillStyle = ['hsl(var(--foreground))', 'hsl(var(--foreground))', 'hsl(var(--foreground))'][i];
         context.font = '14px Inter';
         const labelPos = project([axis[1][0]*1.1, axis[1][1]*1.1, axis[1][2]*1.1]);
         context.fillText(['x','y','z'][i], labelPos[0], labelPos[1]);
     });
+
+    // Draw numeric labels on axes
+    const tickStep = 2; 
+    context.fillStyle = 'hsl(var(--muted-foreground))';
+    context.font = '12px Inter';
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+
+    for (let i = -range; i <= range; i += tickStep) {
+        if (i === 0) continue;
+        
+        // X-axis ticks
+        const xTickPos = project([i, 0, 0]);
+        context.fillText(i.toString(), xTickPos[0], xTickPos[1] + 10);
+
+        // Y-axis ticks
+        const yTickPos = project([0, i, 0]);
+        context.fillText(i.toString(), yTickPos[0], yTickPos[1] + 10);
+        
+        // Z-axis ticks
+        const zTickPos = project([0, 0, i]);
+        context.fillText(i.toString(), zTickPos[0], zTickPos[1] + 10);
+    }
 
 
     if (parsedFunc && !error) {
@@ -193,7 +216,7 @@ export function VisualizationPanel3D({ funcStr }: { funcStr: string }) {
   }, [funcStr, parsedFunc, error, angles, zoom]);
 
   return (
-    <div id="visualization-panel-3d" className="flex-1 flex flex-col p-4 bg-muted/30">
+    <div id="visualization-panel" className="flex-1 flex flex-col p-4 bg-muted/30">
       <Card className="flex-1 flex flex-col">
         <CardHeader>
           <div>
