@@ -8,6 +8,12 @@ import { Label } from '../ui/label';
 
 type Point3D = [number, number, number];
 type Point2D = [number, number];
+type Polygon = {
+  points: [Point3D, Point3D, Point3D, Point3D];
+  avgZ: number;
+  color: string;
+};
+
 
 type VisualizationPanel3DProps = {
   funcStr: string;
@@ -23,10 +29,10 @@ export function VisualizationPanel3D({ funcStr, gradFns }: VisualizationPanel3DP
   const dragStart = useRef<{ x: number; y: number; angles: typeof angles } | null>(null);
   const [showGradient, setShowGradient] = useState(false);
 
-  const { parsedFunc, data, zRange } = useMemo(() => {
+  const { parsedFunc, polygons, zRange } = useMemo(() => {
     if (!funcStr) {
       setError(null);
-      return { parsedFunc: null, data: [], zRange: { min: -5, max: 5 } };
+      return { parsedFunc: null, polygons: [], zRange: { min: -5, max: 5 } };
     }
     try {
       const node = math.parse(funcStr);
@@ -36,23 +42,28 @@ export function VisualizationPanel3D({ funcStr, gradFns }: VisualizationPanel3DP
 
       const step = 0.5;
       const range = 10;
-      const points: Point3D[] = [];
+      const pointsGrid: (Point3D | null)[][] = [];
       let minZ = Infinity;
       let maxZ = -Infinity;
 
-      for (let x = -range; x <= range; x += step) {
-        for (let y = -range; y <= range; y += step) {
+      const numSteps = Math.ceil(2 * range / step);
+
+      for (let i = 0; i <= numSteps; i++) {
+        const x = -range + i * step;
+        pointsGrid[i] = [];
+        for (let j = 0; j <= numSteps; j++) {
+          const y = -range + j * step;
           try {
             const z = compiled.evaluate({ x, y });
             if (isFinite(z)) {
-              points.push([x, y, z]);
+              pointsGrid[i][j] = [x, y, z];
               if (z < minZ) minZ = z;
               if (z > maxZ) maxZ = z;
             } else {
-              points.push([x, y, NaN]);
+              pointsGrid[i][j] = null;
             }
           } catch (e) {
-            points.push([x, y, NaN]);
+            pointsGrid[i][j] = null;
           }
         }
       }
@@ -63,11 +74,36 @@ export function VisualizationPanel3D({ funcStr, gradFns }: VisualizationPanel3DP
         finalZRange.max += 1;
       }
 
+      // Create polygons from grid
+      const polyList: Polygon[] = [];
+      for (let i = 0; i < numSteps; i++) {
+        for (let j = 0; j < numSteps; j++) {
+          const p1 = pointsGrid[i][j];
+          const p2 = pointsGrid[i + 1][j];
+          const p3 = pointsGrid[i + 1][j + 1];
+          const p4 = pointsGrid[i][j + 1];
 
-      return { parsedFunc: compiled, data: points, zRange: finalZRange };
+          if (p1 && p2 && p3 && p4) {
+            const avgZ = (p1[2] + p2[2] + p3[2] + p4[2]) / 4;
+            
+            // Simple lighting calculation based on surface normal
+            const v1 = [p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]];
+            const v2 = [p4[0] - p1[0], p4[1] - p1[1], p4[2] - p1[2]];
+            const normalZ = v1[0] * v2[1] - v1[1] * v2[0]; // Simplified cross product z-component
+            
+            const light = 0.7 + normalZ * 0.3; // Base light + normal contribution
+            const colorVal = Math.floor(light * 150) + 50; // Map to a blue shade
+            const color = `hsl(212, 100%, ${Math.max(20, Math.min(80, 100 - colorVal/2.5))}%)`;
+
+            polyList.push({ points: [p1, p2, p3, p4], avgZ, color });
+          }
+        }
+      }
+
+      return { parsedFunc: compiled, polygons: polyList, zRange: finalZRange };
     } catch (e: any) {
       setError(`Error en la función: ${e.message}`);
-      return { parsedFunc: null, data: [], zRange: { min: -5, max: 5 } };
+      return { parsedFunc: null, polygons: [], zRange: { min: -5, max: 5 } };
     }
   }, [funcStr]);
 
@@ -192,62 +228,42 @@ export function VisualizationPanel3D({ funcStr, gradFns }: VisualizationPanel3DP
     }
     
     const zTickCount = 5;
-    const zTickStep = (zRange.max - zRange.min) / zTickCount;
-    for(let i = 0; i <= zTickCount; i++) {
-        const zVal = zRange.min + i * zTickStep;
-        if (Math.abs(zVal) < 1e-9) continue;
-        const zTickPos = project([0, 0, zVal]);
-        context.fillText(zVal.toFixed(1), zTickPos[0] + 15, zTickPos[1]);
+    if (zRange.max - zRange.min > 1e-9) {
+      const zTickStep = (zRange.max - zRange.min) / zTickCount;
+      for(let i = 0; i <= zTickCount; i++) {
+          const zVal = zRange.min + i * zTickStep;
+          if (Math.abs(zVal) < 1e-9) continue;
+          const zTickPos = project([0, 0, zVal]);
+          context.fillText(zVal.toFixed(1), zTickPos[0] + 15, zTickPos[1]);
+      }
     }
 
 
     if (parsedFunc && !error) {
-      const pointsPerLine = 2 * range / 0.5 + 1;
+      // Sort polygons from back to front
+      polygons.sort((a, b) => {
+        const aProjected = project(a.points[0]);
+        const bProjected = project(b.points[0]);
+        return aProjected[1] - bProjected[1];
+      });
 
-      context.strokeStyle = 'hsl(var(--primary))';
-      context.lineWidth = 0.5;
-
-      // Draw lines along x-axis
-      for (let i = 0; i < pointsPerLine; i++) {
+      // Draw polygons
+      polygons.forEach(poly => {
+        const projectedPoints = poly.points.map(p => project(p));
         context.beginPath();
-        let first = true;
-        for (let j = 0; j < pointsPerLine; j++) {
-            const p = data[j * pointsPerLine + i];
-            if (p && !isNaN(p[2])) {
-                const p2d = project(p);
-                if (first) {
-                    context.moveTo(p2d[0], p2d[1]);
-                    first = false;
-                } else {
-                    context.lineTo(p2d[0], p2d[1]);
-                }
-            } else {
-                first = true;
-            }
-        }
+        context.moveTo(projectedPoints[0][0], projectedPoints[0][1]);
+        context.lineTo(projectedPoints[1][0], projectedPoints[1][1]);
+        context.lineTo(projectedPoints[2][0], projectedPoints[2][1]);
+        context.lineTo(projectedPoints[3][0], projectedPoints[3][1]);
+        context.closePath();
+        
+        context.fillStyle = poly.color;
+        context.fill();
+        context.strokeStyle = 'hsl(var(--background) / 0.3)';
+        context.lineWidth = 0.5;
         context.stroke();
-      }
+      });
 
-      // Draw lines along y-axis
-      for (let j = 0; j < pointsPerLine; j++) {
-        context.beginPath();
-        let first = true;
-        for (let i = 0; i < pointsPerLine; i++) {
-             const p = data[j * pointsPerLine + i];
-            if (p && !isNaN(p[2])) {
-                const p2d = project(p);
-                if (first) {
-                    context.moveTo(p2d[0], p2d[1]);
-                    first = false;
-                } else {
-                    context.lineTo(p2d[0], p2d[1]);
-                }
-            } else {
-                first = true;
-            }
-        }
-        context.stroke();
-      }
 
       // Draw gradient field
       if (showGradient && gradFns) {
@@ -290,7 +306,7 @@ export function VisualizationPanel3D({ funcStr, gradFns }: VisualizationPanel3DP
 
     }
 
-  }, [funcStr, parsedFunc, data, zRange, error, angles, zoom, showGradient, gradFns]);
+  }, [funcStr, parsedFunc, polygons, zRange, error, angles, zoom, showGradient, gradFns]);
 
   return (
     <div id="visualization-panel" className="flex-1 flex flex-col p-4 bg-muted/30">
