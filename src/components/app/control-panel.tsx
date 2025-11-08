@@ -6,7 +6,6 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { FunctionInputSection } from '@/components/app/function-input-section';
 import { Function3DSection } from '@/components/app/function-3d-section';
 import { IntegrationSection } from '@/components/app/integration-section';
@@ -25,31 +24,31 @@ type ControlPanelProps = {
 
 export function ControlPanel({ activeTab, setActiveTab, setFunc3D }: ControlPanelProps) {
   return (
-    <aside className="w-full max-w-md border-r border-border flex flex-col">
+    <aside className="w-full max-w-md border-r border-border flex flex-col bg-card">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-        <TabsList className="m-2 grid w-auto grid-cols-5 shrink-0">
-          <TabsTrigger value="function" className="h-auto py-2">
+        <TabsList className="m-2 grid w-auto grid-cols-5 shrink-0 bg-secondary/50">
+          <TabsTrigger value="function" className="h-auto py-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
             <FunctionSquare className="w-5 h-5 mb-1" />
-            <span className="text-xs">Función</span>
+            <span className="text-xs font-medium">Función</span>
           </TabsTrigger>
-          <TabsTrigger value="function-3d" className="h-auto py-2">
+          <TabsTrigger value="function-3d" className="h-auto py-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
             <Plot3d className="w-5 h-5 mb-1" />
-            <span className="text-xs">Función 3D</span>
+            <span className="text-xs font-medium">Función 3D</span>
           </TabsTrigger>
-          <TabsTrigger value="integration" className="h-auto py-2">
+          <TabsTrigger value="integration" className="h-auto py-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
             <SlidersHorizontal className="w-5 h-5 mb-1" />
-            <span className="text-xs">Integrales</span>
+            <span className="text-xs font-medium">Integrales</span>
           </TabsTrigger>
-          <TabsTrigger value="optimization" className="h-auto py-2">
+          <TabsTrigger value="optimization" className="h-auto py-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
             <Waypoints className="w-5 h-5 mb-1" />
-            <span className="text-xs">Optimizar</span>
+            <span className="text-xs font-medium">Optimizar</span>
           </TabsTrigger>
-          <TabsTrigger value="history" className="h-auto py-2">
+          <TabsTrigger value="history" className="h-auto py-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
             <History className="w-5 h-5 mb-1" />
-            <span className="text-xs">Historial</span>
+            <span className="text-xs font-medium">Historial</span>
           </TabsTrigger>
         </TabsList>
-        <ScrollArea className="flex-1">
+        <div className="flex-1 overflow-y-auto">
           <div className="p-4 pt-0">
             <TabsContent value="function">
               <FunctionInputSection />
@@ -67,7 +66,7 @@ export function ControlPanel({ activeTab, setActiveTab, setFunc3D }: ControlPane
               <HistorySection />
             </TabsContent>
           </div>
-        </ScrollArea>
+        </div>
       </Tabs>
     </aside>
   );

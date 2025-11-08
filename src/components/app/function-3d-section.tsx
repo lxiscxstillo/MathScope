@@ -99,11 +99,11 @@ export function Function3DSection({ setFunc3D }: Function3DSectionProps) {
   }, [analyzeFunction, form]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 fade-in">
       <Card>
         <CardHeader>
           <CardTitle>Análisis de Función 3D</CardTitle>
-          <CardDescription>Introduce una función `z = f(x, y)` para visualizarla y analizarla automáticamente.</CardDescription>
+          <CardDescription>Introduce una función `z = f(x, y)` para visualizarla y analizarla.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -122,7 +122,7 @@ export function Function3DSection({ setFunc3D }: Function3DSectionProps) {
                       )}
                     </div>
                     <FormControl>
-                      <Input placeholder="Ej: sin(x) * cos(y)" {...field} onChange={handleFunctionChange} className="font-code" />
+                      <Input placeholder="Ej: sin(x) * cos(y)" {...field} onChange={handleFunctionChange} className="font-code text-base" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -133,7 +133,7 @@ export function Function3DSection({ setFunc3D }: Function3DSectionProps) {
         </CardContent>
       </Card>
       {analysis && isValid && (
-        <Card>
+        <Card className="fade-in">
           <CardHeader>
             <CardTitle>Análisis de la Función</CardTitle>
           </CardHeader>
@@ -148,7 +148,7 @@ export function Function3DSection({ setFunc3D }: Function3DSectionProps) {
               </AccordionItem>
               <AccordionItem value="item-2">
                 <AccordionTrigger>Derivadas Parciales</AccordionTrigger>
-                <AccordionContent className="text-sm space-y-3">
+                <AccordionContent className="text-sm space-y-3 overflow-x-auto">
                   <div className="font-code space-y-3">
                     <p className='flex items-center gap-2'><span>∂z/∂x =</span> <InlineMath math={analysis.firstPartialX} /></p>
                     <p className='flex items-center gap-2'><span>∂z/∂y =</span> <InlineMath math={analysis.firstPartialY} /></p>
@@ -159,7 +159,7 @@ export function Function3DSection({ setFunc3D }: Function3DSectionProps) {
               </AccordionItem>
               <AccordionItem value="item-3">
                 <AccordionTrigger>Gradiente</AccordionTrigger>
-                <AccordionContent className="text-sm space-y-3">
+                <AccordionContent className="text-sm space-y-3 overflow-x-auto">
                   <div className="font-code">
                     <p className='flex items-center gap-2'><InlineMath math={analysis.gradient} /></p>
                   </div>

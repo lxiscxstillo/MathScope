@@ -127,7 +127,7 @@ function UnconstrainedOptimization() {
               <FormItem>
                 <FormLabel>Función Objetivo f(x, y)</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ej: x^2 + y^2" className="font-code" {...field} />
+                  <Input placeholder="Ej: x^2 + y^2" className="font-code text-base" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -137,19 +137,19 @@ function UnconstrainedOptimization() {
       </Form>
       
       {result && result.length > 0 && (
-        <Card>
+        <Card className="fade-in">
           <CardHeader>
-            <CardTitle>Puntos Críticos Encontrados</CardTitle>
+            <CardTitle className="text-lg">Puntos Críticos Encontrados</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {result.map((p, i) => (
                 <div key={i}>
-                    <h4 className="flex items-center font-medium">
+                    <h4 className="flex items-center font-semibold capitalize text-base">
                         {getPointIcon(p.type)}
                         {p.type.replace('-', ' ')}
                     </h4>
-                    <p className="font-code text-sm pl-7 flex items-center gap-2">
-                        f = {p.value.toFixed(4)} en ({p.point[0]}, {p.point[1]})
+                    <p className="font-code text-sm pl-7 text-muted-foreground">
+                        Valor f = <span className="text-foreground font-medium">{p.value.toFixed(4)}</span> en ({p.point[0]}, {p.point[1]})
                     </p>
                 </div>
             ))}
@@ -215,7 +215,7 @@ function LagrangeOptimization() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Función Objetivo f(x, y)</FormLabel>
-                <FormControl><Input placeholder="Ej: x*y" className="font-code" {...field} /></FormControl>
+                <FormControl><Input placeholder="Ej: x*y" className="font-code text-base" {...field} /></FormControl>
                 <FormMessage />
               </FormItem>
             )}
@@ -226,7 +226,7 @@ function LagrangeOptimization() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Restricción g(x, y) = 0</FormLabel>
-                <FormControl><Input placeholder="Ej: x^2 + y^2 - 1" className="font-code" {...field} /></FormControl>
+                <FormControl><Input placeholder="Ej: x^2 + y^2 - 1" className="font-code text-base" {...field} /></FormControl>
                 <FormMessage />
               </FormItem>
             )}
@@ -235,25 +235,25 @@ function LagrangeOptimization() {
       </Form>
       
       {result && (
-        <Card>
-          <CardHeader><CardTitle>Resultados de la Optimización</CardTitle></CardHeader>
+        <Card className="fade-in">
+          <CardHeader><CardTitle className="text-lg">Resultados de la Optimización</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             {result.maxima.length > 0 && (
               <div>
-                <h4 className="flex items-center font-medium text-green-600"><ArrowUp className="mr-2 h-5 w-5" />Máximo(s)</h4>
+                <h4 className="flex items-center font-semibold text-base text-green-600"><ArrowUp className="mr-2 h-5 w-5" />Máximo(s) Encontrado(s)</h4>
                 {result.maxima.map((m, i) => (
-                   <p key={i} className="font-code text-sm pl-7 flex items-center gap-2">
-                    <span>f = {m.value.toFixed(4)} en ({m.point[0]}, {m.point[1]})</span>
+                   <p key={i} className="font-code text-sm pl-7 text-muted-foreground">
+                    Valor f = <span className="text-foreground font-medium">{m.value.toFixed(4)}</span> en ({m.point[0]}, {m.point[1]})
                   </p>
                 ))}
               </div>
             )}
             {result.minima.length > 0 && (
               <div>
-                <h4 className="flex items-center font-medium text-red-600"><ArrowDown className="mr-2 h-5 w-5" />Mínimo(s)</h4>
+                <h4 className="flex items-center font-semibold text-base text-red-600"><ArrowDown className="mr-2 h-5 w-5" />Mínimo(s) Encontrado(s)</h4>
                 {result.minima.map((m, i) => (
-                  <p key={i} className="font-code text-sm pl-7 flex items-center gap-2">
-                     <span>f = {m.value.toFixed(4)} en ({m.point[0]}, {m.point[1]})</span>
+                  <p key={i} className="font-code text-sm pl-7 text-muted-foreground">
+                     Valor f = <span className="text-foreground font-medium">{m.value.toFixed(4)}</span> en ({m.point[0]}, {m.point[1]})
                   </p>
                 ))}
               </div>
@@ -270,7 +270,7 @@ function LagrangeOptimization() {
 // Main Component
 export function OptimizationSection() {
   return (
-    <Card>
+    <Card className="fade-in">
       <CardHeader>
         <CardTitle>Optimización de Funciones</CardTitle>
         <CardDescription>
@@ -283,10 +283,10 @@ export function OptimizationSection() {
             <TabsTrigger value="unconstrained">Sin Restricciones</TabsTrigger>
             <TabsTrigger value="lagrange">Lagrange (Forzada)</TabsTrigger>
           </TabsList>
-          <TabsContent value="unconstrained" className="pt-4">
+          <TabsContent value="unconstrained" className="pt-6">
             <UnconstrainedOptimization />
           </TabsContent>
-          <TabsContent value="lagrange" className="pt-4">
+          <TabsContent value="lagrange" className="pt-6">
             <LagrangeOptimization />
           </TabsContent>
         </Tabs>

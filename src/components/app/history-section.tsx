@@ -25,32 +25,32 @@ export function HistorySection() {
   };
 
   return (
-    <Card>
+    <Card className="fade-in">
       <CardHeader>
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-start">
           <div>
             <CardTitle>Historial de Cálculos</CardTitle>
             <CardDescription>Revisa y restaura sesiones anteriores.</CardDescription>
           </div>
           {history.length > 0 && (
-            <Button variant="destructive" size="sm" onClick={clearHistory}>
-              <Trash2 className="mr-2 h-4 w-4" /> Limpiar Todo
+            <Button variant="outline" size="sm" onClick={clearHistory}>
+              <Trash2 className="mr-2 h-4 w-4" /> Limpiar
             </Button>
           )}
         </div>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="h-96">
+        <ScrollArea className="h-[60vh]">
           {history.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-8">
-              <History className="h-12 w-12 mb-4" />
-              <p>Aún no hay historial.</p>
+            <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-8 space-y-2">
+              <History className="h-12 w-12 text-primary/30" />
+              <p className="font-medium">No hay historial.</p>
               <p className="text-sm">Tus cálculos se guardarán aquí automáticamente.</p>
             </div>
           ) : (
             <div className="space-y-2">
               {history.map((item, index) => (
-                <div key={index} className="p-3 border rounded-md flex justify-between items-center bg-background hover:bg-secondary/50 transition-colors">
+                <div key={index} className="p-3 border rounded-lg flex justify-between items-center bg-secondary/30 hover:bg-secondary/70 transition-colors duration-200">
                   <div className="truncate">
                     <p className="font-medium font-code truncate text-sm">f(x) = {item.func}</p>
                     <p className="text-xs text-muted-foreground">
@@ -58,10 +58,10 @@ export function HistorySection() {
                     </p>
                   </div>
                   <div className="flex gap-1 ml-2">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => loadState(item)}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => loadState(item)} title="Restaurar">
                       <RotateCcw className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive" onClick={() => deleteItem(index)}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive" onClick={() => deleteItem(index)} title="Eliminar">
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>

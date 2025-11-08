@@ -30,10 +30,10 @@ export function Header() {
       html2canvas(visualizationPanel, {
         allowTaint: true,
         useCORS: true,
-        backgroundColor: '#ffffff', // Use a solid background color
+        backgroundColor: 'hsl(var(--background))',
       }).then(canvas => {
         const link = document.createElement('a');
-        link.download = 'calculo.png';
+        link.download = 'multicalc-pro.png';
         link.href = canvas.toDataURL('image/png');
         link.click();
          toast({
@@ -58,21 +58,21 @@ export function Header() {
   };
   
   return (
-    <header className="flex items-center h-16 px-4 border-b shrink-0">
-      <div className="flex items-center gap-2">
+    <header className="flex items-center h-16 px-4 md:px-6 border-b shrink-0 bg-card">
+      <div className="flex items-center gap-3">
         <Cube className="h-7 w-7 text-primary" />
-        <h1 className="text-xl font-semibold tracking-tight font-headline">
+        <h1 className="text-xl font-bold tracking-tight">
           MultiCalc Pro
         </h1>
       </div>
       <div className="ml-auto flex items-center gap-2">
         <Button variant="outline" size="sm" onClick={handleDemoMode}>
           <PlayCircle className="mr-2 h-4 w-4" />
-          Cargar Ejemplo
+          Ejemplo
         </Button>
-        <Button variant="outline" size="sm" onClick={handleExport}>
+        <Button variant="default" size="sm" onClick={handleExport}>
           <Download className="mr-2 h-4 w-4" />
-          Exportar
+          Exportar PNG
         </Button>
       </div>
     </header>

@@ -6,10 +6,10 @@ import { select } from 'd3-selection';
 import { scaleLinear, ScaleLinear } from 'd3-scale';
 import { useAppState } from '@/hooks/use-app-state';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, ZoomIn } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-const TICK_MIN_SPACING = 50; // Minimum pixels between ticks
+const TICK_MIN_SPACING = 60; // Minimum pixels between ticks
 
 export function VisualizationPanel() {
   const { state } = useAppState();
@@ -29,7 +29,7 @@ export function VisualizationPanel() {
       const node = math.parse(funcStr);
       const compiled = node.compile();
        // Test evaluation
-      compiled.evaluate({ x: 1, y: 1 });
+      compiled.evaluate({ x: 1 });
       setError(null);
       return compiled;
     } catch (e: any) {
@@ -45,7 +45,7 @@ export function VisualizationPanel() {
     if (!canvas) return;
     
     const zoomBehavior = d3.zoom<HTMLCanvasElement, unknown>()
-        .scaleExtent([0.1, 20]) // Zoom range
+        .scaleExtent([0.1, 40]) // Zoom range
         .on('zoom', (event) => {
             setTransform(event.transform);
         });
@@ -55,22 +55,25 @@ export function VisualizationPanel() {
 
     // Initial transform setup
     const { width, height } = canvas.getBoundingClientRect();
-    const initialScale = Math.min(width, height) / 10;
+    const initialScale = Math.min(width, height) / 20; // Start a bit more zoomed out
     const initialTransform = d3.zoomIdentity
         .translate(width / 2, height / 2)
         .scale(initialScale);
     
     select(canvas).call(zoomBehavior.transform, initialTransform);
-    setTransform(initialTransform);
 
-
-     // Reset zoom when function changes
-    const selection = select(canvas);
-    selection.call(zoomBehavior.transform, initialTransform);
-    toast({ title: 'Vista Restablecida', description: 'El zoom y la posición se han reiniciado.' });
-
-
+    // Only set transform and toast on actual function change, not initial mount
+    if (funcStr !== initialState.func) {
+        setTransform(initialTransform);
+        toast({ title: 'Vista Restablecida', description: 'El zoom y la posición se han reiniciado.' });
+    } else {
+        setTransform(initialTransform);
+    }
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [funcStr, toast]);
+
+  const initialState = {func: 'sin(x) / x'};
 
 
   useEffect(() => {
@@ -100,7 +103,7 @@ export function VisualizationPanel() {
   const drawGrid = (ctx: CanvasRenderingContext2D, xScale: ScaleLinear<number, number>, yScale: ScaleLinear<number, number>, width: number, height: number) => {
     ctx.beginPath();
     ctx.strokeStyle = 'hsl(var(--border))';
-    ctx.lineWidth = 0.5;
+    ctx.lineWidth = 1;
 
     const xTicks = xScale.ticks(width / TICK_MIN_SPACING);
     const yTicks = yScale.ticks(height / TICK_MIN_SPACING);
@@ -120,7 +123,7 @@ export function VisualizationPanel() {
 
 const drawAxes = (ctx: CanvasRenderingContext2D, xScale: ScaleLinear<number, number>, yScale: ScaleLinear<number, number>, width: number, height: number) => {
     ctx.beginPath();
-    ctx.strokeStyle = 'hsl(var(--foreground) / 0.7)';
+    ctx.strokeStyle = 'hsl(var(--muted-foreground) / 0.8)';
     ctx.lineWidth = 1.5;
 
     // Y-axis (at x=0)
@@ -142,7 +145,7 @@ const drawAxes = (ctx: CanvasRenderingContext2D, xScale: ScaleLinear<number, num
     const xTicks = xScale.ticks(width / TICK_MIN_SPACING);
     xTicks.forEach(tick => {
         if (tick === 0) return;
-        ctx.fillText(tick.toString(), xScale(tick), yScale(0) + 5);
+        ctx.fillText(tick.toString(), xScale(tick), yScale(0) + 8);
     });
 
     ctx.textAlign = 'right';
@@ -150,14 +153,16 @@ const drawAxes = (ctx: CanvasRenderingContext2D, xScale: ScaleLinear<number, num
     const yTicks = yScale.ticks(height / TICK_MIN_SPACING);
     yTicks.forEach(tick => {
         if (tick === 0) return;
-        ctx.fillText(tick.toString(), xScale(0) - 5, yScale(tick));
+        ctx.fillText(tick.toString(), xScale(0) - 8, yScale(tick));
     });
 };
 
 const drawFunction = (ctx: CanvasRenderingContext2D, func: math.EvalFunction, xScale: ScaleLinear<number, number>, yScale: ScaleLinear<number, number>, width: number) => {
     ctx.beginPath();
     ctx.strokeStyle = 'hsl(var(--primary))';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
     
     let firstPoint = true;
     for (let i = 0; i <= width; i++) {
@@ -189,7 +194,7 @@ const drawFunction = (ctx: CanvasRenderingContext2D, func: math.EvalFunction, xS
 };
 
   return (
-    <div id="visualization-panel" className="flex-1 flex flex-col p-4 bg-muted/30">
+    <div id="visualization-panel" className="flex-1 flex flex-col p-4 bg-secondary/30">
       <Card className="flex-1 flex flex-col">
         <CardHeader>
           <div>
@@ -204,9 +209,19 @@ const drawFunction = (ctx: CanvasRenderingContext2D, func: math.EvalFunction, xS
 
            {(error || !funcStr) && (
              <div className="absolute inset-0 flex items-center justify-center bg-background/80 pointer-events-none">
-                <div className="text-center text-muted-foreground flex flex-col items-center gap-2 p-4 rounded-lg bg-background border">
-                  {error ? <AlertTriangle className="h-8 w-8 text-destructive" /> : <div className="h-8 w-8" />}
-                  {error ? <p className="text-destructive max-w-xs">{error}</p> : <p>Introduce una función para ver la gráfica.</p>}
+                <div className="text-center text-muted-foreground flex flex-col items-center gap-2 p-4 rounded-lg bg-card border">
+                  {error ? (
+                    <>
+                      <AlertTriangle className="h-8 w-8 text-destructive" />
+                      <p className="font-medium text-destructive">Error en la función</p>
+                      <p className="text-xs max-w-xs">{error}</p>
+                    </>
+                  ) : (
+                    <>
+                      <ZoomIn className="h-8 w-8 text-primary/50" />
+                      <p>Introduce una función para ver la gráfica.</p>
+                    </>
+                  )}
                 </div>
              </div>
           )}

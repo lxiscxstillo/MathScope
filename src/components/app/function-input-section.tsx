@@ -102,10 +102,10 @@ export function FunctionInputSection() {
   };
   
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 fade-in">
       <Card>
         <CardHeader>
-          <CardTitle>Análisis de Función 1D</CardTitle>
+          <CardTitle>Análisis de Función</CardTitle>
           <CardDescription>Introduce una función f(x) para visualizar y analizar automáticamente.</CardDescription>
         </CardHeader>
         <CardContent>
@@ -125,45 +125,44 @@ export function FunctionInputSection() {
                       )}
                     </div>
                     <FormControl>
-                      <Input placeholder="Ej: sin(x^2)" {...field} onChange={handleFunctionChange} className="font-code" />
+                      <Input placeholder="Ej: sin(x^2)" {...field} onChange={handleFunctionChange} className="font-code text-base" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
-              <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value="item-1">
-                  <AccordionTrigger>Dominio y Rango (Estimado)</AccordionTrigger>
-                  <AccordionContent className="font-code text-sm space-y-2">
-                    {analysisResult ? (
-                      <>
-                        <p>Dominio X: {analysisResult.domain}</p>
-                        <p>Rango Y: {analysisResult.range}</p>
-                      </>
-                    ) : (
-                       <p className="text-xs text-muted-foreground">Esperando función válida...</p>
-                    )}
-                  </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="item-2">
-                  <AccordionTrigger>Derivadas</AccordionTrigger>
-                  <AccordionContent className="text-sm space-y-3">
-                     {analysisResult ? (
-                      <div className="font-code space-y-3">
-                        <p className='flex items-center gap-2'><span>f'(x) =</span> <InlineMath math={analysisResult.firstDerivative} /></p>
-                        <p className='flex items-center gap-2'><span>f''(x) =</span> <InlineMath math={analysisResult.secondDerivative} /></p>
-                      </div>
-                    ) : (
-                       <p className="text-xs text-muted-foreground">Esperando función válida...</p>
-                    )}
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
             </form>
           </Form>
         </CardContent>
       </Card>
+      
+      {analysisResult && isValid && (
+        <Card className="fade-in">
+            <CardHeader>
+                <CardTitle>Análisis de la Función</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="item-1">
+                        <AccordionTrigger>Dominio y Rango (Estimado)</AccordionTrigger>
+                        <AccordionContent className="font-code text-sm space-y-2">
+                            <p>Dominio X: {analysisResult.domain}</p>
+                            <p>Rango Y: {analysisResult.range}</p>
+                        </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="item-2">
+                        <AccordionTrigger>Derivadas</AccordionTrigger>
+                        <AccordionContent className="text-sm space-y-3 overflow-x-auto">
+                            <div className="font-code space-y-3">
+                                <p className='flex items-center gap-2'><span>f'(x) =</span> <InlineMath math={analysisResult.firstDerivative} /></p>
+                                <p className='flex items-center gap-2'><span>f''(x) =</span> <InlineMath math={analysisResult.secondDerivative} /></p>
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
+            </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

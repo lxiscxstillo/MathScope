@@ -127,7 +127,7 @@ export function IntegrationSection() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 fade-in">
     <Card>
       <CardHeader>
         <CardTitle>Integración Múltiple (Numérica)</CardTitle>
@@ -145,7 +145,7 @@ export function IntegrationSection() {
                     <FormItem>
                       <FormLabel>Función f(x, y, z)</FormLabel>
                       <FormControl>
-                        <Input placeholder="Ej: x^2 + y^2" className="font-code" {...field} />
+                        <Input placeholder="Ej: x^2 + y^2" className="font-code text-base" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -175,7 +175,7 @@ export function IntegrationSection() {
                 />
 
                 <div className="space-y-4">
-                <h4 className="font-medium">Límites de Integración</h4>
+                <h4 className="font-medium text-sm text-foreground">Límites de Integración</h4>
                 <div className="grid grid-cols-2 gap-4">
                     <FormField control={form.control} name="limits.x_min" render={({field}) => (<FormItem><FormLabel>x-mín</FormLabel><FormControl><Input {...field} className="font-code"/></FormControl><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="limits.x_max" render={({field}) => (<FormItem><FormLabel>x-máx</FormLabel><FormControl><Input {...field} className="font-code"/></FormControl><FormMessage /></FormItem>)} />
@@ -198,38 +198,30 @@ export function IntegrationSection() {
       </CardContent>
     </Card>
 
-    {isPending && (
-        <Card>
-            <CardHeader>
-                <CardTitle>Calculando...</CardTitle>
-            </CardHeader>
-        </Card>
-    )}
-
-    {error && !isPending && (
-        <Card className="border-destructive">
-            <CardHeader><CardTitle className="text-destructive">Error</CardTitle></CardHeader>
-            <CardContent><p>{error}</p></CardContent>
-        </Card>
-    )}
-
-    {result !== null && (
-        <Card className="bg-secondary/50">
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <Calculator className="w-6 h-6 text-primary" />
-                    Resultado (Aproximado)
-                </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+    {(result !== null || error || isPending) && (
+      <Card className="bg-secondary/30 fade-in">
+          <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                  {isPending 
+                    ? 'Calculando...' 
+                    : error 
+                    ? <span className="text-destructive">Error</span> 
+                    : <><Calculator className="w-5 h-5 text-primary" /> Resultado (Aproximado)</>
+                  }
+              </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+              {error && !isPending && <p className="text-destructive-foreground bg-destructive/80 p-3 rounded-md">{error}</p>}
+              {result !== null && !error && !isPending && (
                 <div>
                     <p className="text-3xl font-bold font-code text-center text-primary">{result.toFixed(4)}</p>
                     <p className="text-center text-muted-foreground text-sm mt-1">
                         {integralType === 'double' ? 'Volumen bajo la superficie' : 'Hipervolumen calculado'}
                     </p>
                 </div>
-            </CardContent>
-        </Card>
+              )}
+          </CardContent>
+      </Card>
     )}
     </div>
   );

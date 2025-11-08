@@ -93,7 +93,7 @@ export function VisualizationPanel3D({ funcStr, gradFns }: VisualizationPanel3DP
             
             const light = 0.7 + normalZ * 0.3; // Base light + normal contribution
             const colorVal = Math.floor(light * 150) + 50; // Map to a blue shade
-            const color = `hsl(212, 100%, ${Math.max(20, Math.min(80, 100 - colorVal/2.5))}%)`;
+            const color = `hsl(217, 91%, ${Math.max(20, Math.min(80, 100 - colorVal/2.5))}%)`;
 
             polyList.push({ points: [p1, p2, p3, p4], avgZ, color });
           }
@@ -187,7 +187,7 @@ export function VisualizationPanel3D({ funcStr, gradFns }: VisualizationPanel3DP
     const range = 10;
     
     // Draw axes
-    context.strokeStyle = 'hsl(var(--muted-foreground))';
+    context.strokeStyle = 'hsl(var(--muted-foreground) / 0.5)';
     context.lineWidth = 1;
     const axisLength = range * 1.2;
     const zAxisLength = Math.max(Math.abs(zRange.min), Math.abs(zRange.max), range) * 1.1;
@@ -259,7 +259,7 @@ export function VisualizationPanel3D({ funcStr, gradFns }: VisualizationPanel3DP
         
         context.fillStyle = poly.color;
         context.fill();
-        context.strokeStyle = 'hsl(var(--background) / 0.3)';
+        context.strokeStyle = 'hsl(var(--background) / 0.2)';
         context.lineWidth = 0.5;
         context.stroke();
       });
@@ -268,7 +268,7 @@ export function VisualizationPanel3D({ funcStr, gradFns }: VisualizationPanel3DP
       // Draw gradient field
       if (showGradient && gradFns) {
         context.strokeStyle = 'hsl(var(--destructive))';
-        context.lineWidth = 1;
+        context.lineWidth = 1.5;
         const gradStep = 2; // draw fewer vectors than grid lines
 
         for (let x = -range; x <= range; x += gradStep) {
@@ -309,7 +309,7 @@ export function VisualizationPanel3D({ funcStr, gradFns }: VisualizationPanel3DP
   }, [funcStr, parsedFunc, polygons, zRange, error, angles, zoom, showGradient, gradFns]);
 
   return (
-    <div id="visualization-panel" className="flex-1 flex flex-col p-4 bg-muted/30">
+    <div id="visualization-panel" className="flex-1 flex flex-col p-4 bg-secondary/30">
       <Card className="flex-1 flex flex-col">
         <CardHeader>
           <div className="flex justify-between items-start">
@@ -336,9 +336,10 @@ export function VisualizationPanel3D({ funcStr, gradFns }: VisualizationPanel3DP
 
           {error && (
             <div className="absolute inset-0 flex items-center justify-center bg-background/80 pointer-events-none">
-              <div className="text-center text-muted-foreground flex flex-col items-center gap-2 p-4 rounded-lg bg-background border">
+              <div className="text-center text-muted-foreground flex flex-col items-center gap-2 p-4 rounded-lg bg-card border border-destructive/50">
                 <AlertTriangle className="h-8 w-8 text-destructive" />
-                <p className="text-destructive max-w-xs">{error}</p>
+                <p className="font-medium text-destructive">Error en la función</p>
+                <p className="text-xs max-w-xs">{error}</p>
               </div>
             </div>
           )}
