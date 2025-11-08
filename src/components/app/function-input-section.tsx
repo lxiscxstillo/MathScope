@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useAppState } from '@/hooks/use-app-state';
-import { BlockMath, InlineMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 
 type AnalysisResult = {
   domain: string;
@@ -44,13 +44,39 @@ export function FunctionInputSection() {
       return;
     }
     try {
-      math.parse(funcStr).compile().evaluate({ x: 1 });
+      const compiledFunc = math.parse(funcStr).compile();
+      compiledFunc.evaluate({ x: 1 });
       setIsValid(true);
+      
+      // Estimate range
+      let minVal = Infinity;
+      let maxVal = -Infinity;
+      const step = 0.1;
+      const domainRange = 100;
+      for (let x = -domainRange; x <= domainRange; x += step) {
+        try {
+          const y = compiledFunc.evaluate({ x });
+          if (isFinite(y)) {
+            if (y < minVal) minVal = y;
+            if (y > maxVal) maxVal = y;
+          }
+        } catch (e) {
+          // Ignore points where function is not defined
+        }
+      }
+
       const firstDerivative = math.derivative(funcStr, 'x');
       const secondDerivative = math.derivative(firstDerivative, 'x');
+      
+      let rangeStr = 'No se pudo estimar';
+      if (isFinite(minVal) && isFinite(maxVal)) {
+        rangeStr = `Estimado: [${minVal.toFixed(2)}, ${maxVal.toFixed(2)}]`;
+      }
+
+
       setAnalysisResult({
         domain: '(-∞, ∞)',
-        range: 'Depende de la función',
+        range: rangeStr,
         firstDerivative: firstDerivative.toTex(),
         secondDerivative: secondDerivative.toTex(),
       });
