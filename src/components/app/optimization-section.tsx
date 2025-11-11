@@ -65,15 +65,15 @@ function UnconstrainedOptimization() {
 
       // Test a grid of points to find where gradient is close to zero
       const testPoints: {x: number, y: number}[] = [];
-      for(let x = -5; x<=5; x+=0.5) {
-        for(let y = -5; y<=5; y+=0.5) {
+      for(let x = -5; x<=5; x+=0.25) {
+        for(let y = -5; y<=5; y+=0.25) {
           testPoints.push({x,y});
         }
       }
       // Add common points
       testPoints.push({x: 0, y: 0}, {x: 1, y: 1}, {x: -1, y: -1}, {x: 1, y: -1}, {x: -1, y: 1});
 
-      const uniquePoints = [...new Map(testPoints.map(item => [`${item.x},${item.y}`, item])).values()];
+      const uniquePoints = [...new Map(testPoints.map(item => [`${item.x.toFixed(2)},${item.y.toFixed(2)}`, item])).values()];
 
       uniquePoints.forEach(p => {
         try {
@@ -81,12 +81,12 @@ function UnconstrainedOptimization() {
           const fy_val = fy.evaluate(p);
 
           // Check if point is a critical point (gradient is zero)
-          if (Math.abs(fx_val) < 1e-6 && Math.abs(fy_val) < 1e-6) {
+          if (Math.abs(fx_val) < 1e-4 && Math.abs(fy_val) < 1e-4) {
              const D = fxx.evaluate(p) * fyy.evaluate(p) - Math.pow(fxy.evaluate(p), 2);
              const fxx_val = fxx.evaluate(p);
              let type: CriticalPoint['type'] = 'inconclusive';
 
-             if (Math.abs(D) < 1e-6) {
+             if (Math.abs(D) < 1e-4) {
                 type = 'inconclusive';
              } else if (D > 0 && fxx_val > 0) {
                 type = 'local-minimum';
@@ -97,7 +97,7 @@ function UnconstrainedOptimization() {
              }
              
              // Avoid adding duplicate points
-             if (!criticalPointsFound.some(cp => math.deepEqual(cp.point, [p.x, p.y]))) {
+             if (!criticalPointsFound.some(cp => math.deepEqual(cp.point.map(v => v.toFixed(2)), [p.x.toFixed(2), p.y.toFixed(2)]))) {
                 criticalPointsFound.push({
                     point: [p.x, p.y],
                     type,
@@ -168,7 +168,7 @@ function UnconstrainedOptimization() {
                         {p.type.replace('-', ' ')}
                     </h4>
                     <p className="font-code text-sm pl-7 text-muted-foreground">
-                        Valor f = <span className="text-foreground font-medium">{p.value.toFixed(4)}</span> en ({p.point[0]}, {p.point[1]})
+                        Valor f = <span className="text-foreground font-medium">{p.value.toFixed(4)}</span> en ({p.point[0].toFixed(3)}, {p.point[1].toFixed(3)})
                     </p>
                 </div>
             )) : (
@@ -197,31 +197,48 @@ function LagrangeOptimization() {
       return;
     }
     
-    // This is a simplified symbolic solver for a common case: x^2+y^2=r^2
-    const constraintMatch = constraintFunc.replace(/\s/g,'').match(/^x\^2\+y\^2-([0-9.]+)$/);
-    if (objectiveFunc === 'x*y' && constraintMatch) {
-        const rSquared = parseFloat(constraintMatch[1]);
-        const r = Math.sqrt(rSquared);
-        const pointVal = r / Math.sqrt(2);
-        
+    try {
         const f = math.parse(objectiveFunc).compile();
+        const g = math.parse(constraintFunc).compile();
 
-        const points = [
-            [pointVal, pointVal],
-            [-pointVal, -pointVal],
-            [pointVal, -pointVal],
-            [-pointVal, pointVal]
-        ];
+        const candidatePoints: {x: number, y: number}[] = [];
+        const searchRange = 10;
+        const step = 0.05;
 
-        const evaluatedPoints = points.map(p => ({ point: p, value: f.evaluate({x: p[0], y: p[1]}) }));
+        // Sample points in a grid and find those that satisfy the constraint g(x,y) = 0
+        for (let x = -searchRange; x <= searchRange; x += step) {
+            for (let y = -searchRange; y <= searchRange; y += step) {
+                try {
+                    if (Math.abs(g.evaluate({ x, y })) < 1e-2) {
+                        candidatePoints.push({ x, y });
+                    }
+                } catch(e) { /* ignore eval errors */ }
+            }
+        }
+        
+        if (candidatePoints.length === 0) {
+            setResult({ maxima: [], minima: [] });
+            return;
+        }
+
+        const evaluatedPoints = candidatePoints.map(p => ({ point: [p.x, p.y], value: f.evaluate(p) }));
+        
         const maxValue = Math.max(...evaluatedPoints.map(p => p.value));
         const minValue = Math.min(...evaluatedPoints.map(p => p.value));
 
+        const maxima = evaluatedPoints.filter(p => Math.abs(p.value - maxValue) < 1e-6);
+        const minima = evaluatedPoints.filter(p => Math.abs(p.value - minValue) < 1e-6);
+
+        // Deduplicate nearby points
+        const uniqueMaxima = [...new Map(maxima.map(item => [item.point.map(c => c.toFixed(2)).join(), item])).values()];
+        const uniqueMinima = [...new Map(minima.map(item => [item.point.map(c => c.toFixed(2)).join(), item])).values()];
+
         setResult({
-            maxima: evaluatedPoints.filter(p => Math.abs(p.value - maxValue) < 1e-6),
-            minima: evaluatedPoints.filter(p => Math.abs(p.value - minValue) < 1e-6),
+            maxima: uniqueMaxima,
+            minima: uniqueMinima,
         });
-    } else {
+
+    } catch (e) {
         setResult(null);
     }
   }, []);
@@ -268,14 +285,14 @@ function LagrangeOptimization() {
       
       {result ? (
         <Card className="fade-in">
-          <CardHeader><CardTitle className="text-lg">Resultados de la Optimización</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-lg">Resultados de la Optimización (Numérico)</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             {result.maxima.length > 0 && (
               <div>
                 <h4 className="flex items-center font-semibold text-base text-green-600"><ArrowUp className="mr-2 h-5 w-5" />Máximo(s) Encontrado(s)</h4>
                 {result.maxima.map((m, i) => (
                    <p key={i} className="font-code text-sm pl-7 text-muted-foreground">
-                    Valor f = <span className="text-foreground font-medium">{m.value.toFixed(4)}</span> en ({m.point[0].toFixed(3)}, {m.point[1].toFixed(3)})
+                    Valor f ≈ <span className="text-foreground font-medium">{m.value.toFixed(4)}</span> en ({m.point[0].toFixed(3)}, {m.point[1].toFixed(3)})
                   </p>
                 ))}
               </div>
@@ -285,19 +302,21 @@ function LagrangeOptimization() {
                 <h4 className="flex items-center font-semibold text-base text-red-600"><ArrowDown className="mr-2 h-5 w-5" />Mínimo(s) Encontrado(s)</h4>
                 {result.minima.map((m, i) => (
                   <p key={i} className="font-code text-sm pl-7 text-muted-foreground">
-                     Valor f = <span className="text-foreground font-medium">{m.value.toFixed(4)}</span> en ({m.point[0].toFixed(3)}, {m.point[1].toFixed(3)})
+                     Valor f ≈ <span className="text-foreground font-medium">{m.value.toFixed(4)}</span> en ({m.point[0].toFixed(3)}, {m.point[1].toFixed(3)})
                   </p>
                 ))}
               </div>
             )}
-            <p className='text-xs text-muted-foreground pt-4'>Nota: La resolución simbólica de Lagrange es compleja. Esta es una demostración para un caso común (f(x,y)=xy con restricción circular).</p>
+             {result.minima.length === 0 && result.maxima.length === 0 && (
+                <p className="text-sm text-muted-foreground">No se encontraron puntos óptimos en el área de búsqueda. Asegúrate de que la restricción `g(x,y)=0` defina una curva válida.</p>
+            )}
           </CardContent>
         </Card>
       ) : (
         <Card className="fade-in">
            <CardHeader><CardTitle className="text-lg">Resultados de la Optimización</CardTitle></CardHeader>
            <CardContent>
-            <p className="text-sm text-muted-foreground">No se pudo resolver para la combinación de función y restricción actual. La demostración actual funciona con `f(x,y)=x*y` y `g(x,y)=x^2+y^2-r`.</p>
+            <p className="text-sm text-muted-foreground">Introduce una función y una restricción para encontrar los puntos óptimos.</p>
            </CardContent>
         </Card>
       )}
@@ -309,27 +328,29 @@ function LagrangeOptimization() {
 // Main Component
 export function OptimizationSection() {
   return (
-    <Card className="fade-in">
-      <CardHeader>
-        <CardTitle>Optimización de Funciones</CardTitle>
-        <CardDescription>
-          Encuentra puntos óptimos de una función, con o sin restricciones.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="unconstrained" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="unconstrained">Sin Restricciones</TabsTrigger>
-            <TabsTrigger value="lagrange">Lagrange (Forzada)</TabsTrigger>
-          </TabsList>
-          <TabsContent value="unconstrained" className="pt-6">
-            <UnconstrainedOptimization />
-          </TabsContent>
-          <TabsContent value="lagrange" className="pt-6">
-            <LagrangeOptimization />
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+    <div className="space-y-4 fade-in">
+      <Card>
+        <CardHeader>
+          <CardTitle>Optimización de Funciones</CardTitle>
+          <CardDescription>
+            Encuentra puntos óptimos de una función, con o sin restricciones.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="unconstrained" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="unconstrained">Sin Restricciones</TabsTrigger>
+              <TabsTrigger value="lagrange">Lagrange (Numérico)</TabsTrigger>
+            </TabsList>
+            <TabsContent value="unconstrained" className="pt-6">
+              <UnconstrainedOptimization />
+            </TabsContent>
+            <TabsContent value="lagrange" className="pt-6">
+              <LagrangeOptimization />
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

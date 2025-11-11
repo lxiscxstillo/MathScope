@@ -27,24 +27,24 @@ export function ControlPanel({ activeTab, setActiveTab, setFunc3D }: ControlPane
     <aside className="w-full max-w-md border-r border-border flex flex-col bg-card">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
         <TabsList className="m-2 grid w-auto grid-cols-5 shrink-0 bg-secondary/50">
-          <TabsTrigger value="function" className="h-auto py-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
-            <FunctionSquare className="w-5 h-5 mb-1" />
+          <TabsTrigger value="function" className="h-auto py-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary flex flex-col items-center gap-1">
+            <FunctionSquare className="w-5 h-5" />
             <span className="text-xs font-medium">Función</span>
           </TabsTrigger>
-          <TabsTrigger value="function-3d" className="h-auto py-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
-            <Plot3d className="w-5 h-5 mb-1" />
+          <TabsTrigger value="function-3d" className="h-auto py-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary flex flex-col items-center gap-1">
+            <Plot3d className="w-5 h-5" />
             <span className="text-xs font-medium">Función 3D</span>
           </TabsTrigger>
-          <TabsTrigger value="integration" className="h-auto py-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
-            <SlidersHorizontal className="w-5 h-5 mb-1" />
+          <TabsTrigger value="integration" className="h-auto py-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary flex flex-col items-center gap-1">
+            <SlidersHorizontal className="w-5 h-5" />
             <span className="text-xs font-medium">Integrales</span>
           </TabsTrigger>
-          <TabsTrigger value="optimization" className="h-auto py-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
-            <Waypoints className="w-5 h-5 mb-1" />
+          <TabsTrigger value="optimization" className="h-auto py-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary flex flex-col items-center gap-1">
+            <Waypoints className="w-5 h-5" />
             <span className="text-xs font-medium">Optimizar</span>
           </TabsTrigger>
-          <TabsTrigger value="history" className="h-auto py-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
-            <History className="w-5 h-5 mb-1" />
+          <TabsTrigger value="history" className="h-auto py-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary flex flex-col items-center gap-1">
+            <History className="w-5 h-5" />
             <span className="text-xs font-medium">Historial</span>
           </TabsTrigger>
         </TabsList>
