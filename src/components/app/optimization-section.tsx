@@ -54,41 +54,60 @@ function UnconstrainedOptimization() {
       return;
     }
     try {
-      const fx = math.derivative(funcStr, 'x');
-      const fy = math.derivative(funcStr, 'y');
+      const node = math.parse(funcStr);
+      const fx = math.derivative(node, 'x');
+      const fy = math.derivative(node, 'y');
       const fxx = math.derivative(fx, 'x');
       const fyy = math.derivative(fy, 'y');
       const fxy = math.derivative(fx, 'y');
 
-      // Simple numeric solver for f_x = 0 and f_y = 0 is complex.
-      // We will assume critical points are at (0,0) or easy to find for this demo.
-      // This is a major simplification.
       const criticalPointsFound: CriticalPoint[] = [];
 
-      // Example for points like (0,0)
-      const testPoints = [{x: 0, y: 0}, {x:1, y:1}, {x:-1, y:-1}]; 
-      
-      testPoints.forEach(p => {
+      // Test a grid of points to find where gradient is close to zero
+      const testPoints: {x: number, y: number}[] = [];
+      for(let x = -5; x<=5; x+=0.5) {
+        for(let y = -5; y<=5; y+=0.5) {
+          testPoints.push({x,y});
+        }
+      }
+      // Add common points
+      testPoints.push({x: 0, y: 0}, {x: 1, y: 1}, {x: -1, y: -1}, {x: 1, y: -1}, {x: -1, y: 1});
+
+      const uniquePoints = [...new Map(testPoints.map(item => [`${item.x},${item.y}`, item])).values()];
+
+      uniquePoints.forEach(p => {
         try {
           const fx_val = fx.evaluate(p);
           const fy_val = fy.evaluate(p);
 
+          // Check if point is a critical point (gradient is zero)
           if (Math.abs(fx_val) < 1e-6 && Math.abs(fy_val) < 1e-6) {
              const D = fxx.evaluate(p) * fyy.evaluate(p) - Math.pow(fxy.evaluate(p), 2);
              const fxx_val = fxx.evaluate(p);
              let type: CriticalPoint['type'] = 'inconclusive';
 
-             if (D > 0 && fxx_val > 0) type = 'local-minimum';
-             else if (D > 0 && fxx_val < 0) type = 'local-maximum';
-             else if (D < 0) type = 'saddle-point';
+             if (Math.abs(D) < 1e-6) {
+                type = 'inconclusive';
+             } else if (D > 0 && fxx_val > 0) {
+                type = 'local-minimum';
+             } else if (D > 0 && fxx_val < 0) {
+                type = 'local-maximum';
+             } else if (D < 0) {
+                type = 'saddle-point';
+             }
              
-             criticalPointsFound.push({
-                 point: [p.x, p.y],
-                 type,
-                 value: math.parse(funcStr).evaluate(p)
-             });
+             // Avoid adding duplicate points
+             if (!criticalPointsFound.some(cp => math.deepEqual(cp.point, [p.x, p.y]))) {
+                criticalPointsFound.push({
+                    point: [p.x, p.y],
+                    type,
+                    value: node.evaluate(p)
+                });
+             }
           }
-        } catch (e) {}
+        } catch (e) {
+          // Ignore evaluation errors at specific points
+        }
       });
       setResult(criticalPointsFound);
 
@@ -136,13 +155,13 @@ function UnconstrainedOptimization() {
         </form>
       </Form>
       
-      {result && result.length > 0 && (
+      {result && (
         <Card className="fade-in">
           <CardHeader>
             <CardTitle className="text-lg">Puntos Críticos Encontrados</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {result.map((p, i) => (
+            {result.length > 0 ? result.map((p, i) => (
                 <div key={i}>
                     <h4 className="flex items-center font-semibold capitalize text-base">
                         {getPointIcon(p.type)}
@@ -152,7 +171,9 @@ function UnconstrainedOptimization() {
                         Valor f = <span className="text-foreground font-medium">{p.value.toFixed(4)}</span> en ({p.point[0]}, {p.point[1]})
                     </p>
                 </div>
-            ))}
+            )) : (
+              <p className="text-sm text-muted-foreground">No se encontraron puntos críticos en el área de búsqueda.</p>
+            )}
           </CardContent>
         </Card>
       )}
@@ -175,19 +196,30 @@ function LagrangeOptimization() {
       setResult(null);
       return;
     }
-    // Note: Symbolic solver for Lagrange is very complex. This part is a placeholder
-    // and would require a dedicated library like nerdamer or a server-side call in a real app.
-    // We simulate a result for a known case.
-    if (objectiveFunc === 'x*y' && constraintFunc.replace(/\s/g,'') === 'x^2+y^2-1') {
+    
+    // This is a simplified symbolic solver for a common case: x^2+y^2=r^2
+    const constraintMatch = constraintFunc.replace(/\s/g,'').match(/^x\^2\+y\^2-([0-9.]+)$/);
+    if (objectiveFunc === 'x*y' && constraintMatch) {
+        const rSquared = parseFloat(constraintMatch[1]);
+        const r = Math.sqrt(rSquared);
+        const pointVal = r / Math.sqrt(2);
+        
+        const f = math.parse(objectiveFunc).compile();
+
+        const points = [
+            [pointVal, pointVal],
+            [-pointVal, -pointVal],
+            [pointVal, -pointVal],
+            [-pointVal, pointVal]
+        ];
+
+        const evaluatedPoints = points.map(p => ({ point: p, value: f.evaluate({x: p[0], y: p[1]}) }));
+        const maxValue = Math.max(...evaluatedPoints.map(p => p.value));
+        const minValue = Math.min(...evaluatedPoints.map(p => p.value));
+
         setResult({
-            maxima: [
-                { point: [0.707, 0.707], value: 0.5 },
-                { point: [-0.707, -0.707], value: 0.5 }
-            ],
-            minima: [
-                { point: [0.707, -0.707], value: -0.5 },
-                { point: [-0.707, 0.707], value: -0.5 }
-            ]
+            maxima: evaluatedPoints.filter(p => Math.abs(p.value - maxValue) < 1e-6),
+            minima: evaluatedPoints.filter(p => Math.abs(p.value - minValue) < 1e-6),
         });
     } else {
         setResult(null);
@@ -234,7 +266,7 @@ function LagrangeOptimization() {
         </form>
       </Form>
       
-      {result && (
+      {result ? (
         <Card className="fade-in">
           <CardHeader><CardTitle className="text-lg">Resultados de la Optimización</CardTitle></CardHeader>
           <CardContent className="space-y-4">
@@ -243,7 +275,7 @@ function LagrangeOptimization() {
                 <h4 className="flex items-center font-semibold text-base text-green-600"><ArrowUp className="mr-2 h-5 w-5" />Máximo(s) Encontrado(s)</h4>
                 {result.maxima.map((m, i) => (
                    <p key={i} className="font-code text-sm pl-7 text-muted-foreground">
-                    Valor f = <span className="text-foreground font-medium">{m.value.toFixed(4)}</span> en ({m.point[0]}, {m.point[1]})
+                    Valor f = <span className="text-foreground font-medium">{m.value.toFixed(4)}</span> en ({m.point[0].toFixed(3)}, {m.point[1].toFixed(3)})
                   </p>
                 ))}
               </div>
@@ -253,13 +285,20 @@ function LagrangeOptimization() {
                 <h4 className="flex items-center font-semibold text-base text-red-600"><ArrowDown className="mr-2 h-5 w-5" />Mínimo(s) Encontrado(s)</h4>
                 {result.minima.map((m, i) => (
                   <p key={i} className="font-code text-sm pl-7 text-muted-foreground">
-                     Valor f = <span className="text-foreground font-medium">{m.value.toFixed(4)}</span> en ({m.point[0]}, {m.point[1]})
+                     Valor f = <span className="text-foreground font-medium">{m.value.toFixed(4)}</span> en ({m.point[0].toFixed(3)}, {m.point[1].toFixed(3)})
                   </p>
                 ))}
               </div>
             )}
-            <p className='text-xs text-muted-foreground pt-4'>Nota: La resolución simbólica de Lagrange es compleja. Esta es una demostración con un caso conocido.</p>
+            <p className='text-xs text-muted-foreground pt-4'>Nota: La resolución simbólica de Lagrange es compleja. Esta es una demostración para un caso común (f(x,y)=xy con restricción circular).</p>
           </CardContent>
+        </Card>
+      ) : (
+        <Card className="fade-in">
+           <CardHeader><CardTitle className="text-lg">Resultados de la Optimización</CardTitle></CardHeader>
+           <CardContent>
+            <p className="text-sm text-muted-foreground">No se pudo resolver para la combinación de función y restricción actual. La demostración actual funciona con `f(x,y)=x*y` y `g(x,y)=x^2+y^2-r`.</p>
+           </CardContent>
         </Card>
       )}
     </div>
